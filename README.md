@@ -22,18 +22,19 @@ Polku Web is a web application built with React and Vite. This project is design
 
    ```sh
    git clone https://github.com/ramzorrr/polkuweb.git
-   cd polkuweb
+   cd polkuweb```
+   
    
 2. Install dependencies
    ```npm install
    # or
-   yarn install
+   yarn install```
 
 Running the Development Server
 To start the development server, run:
 ```npm run dev
 # or
-yarn dev
+yarn dev```
 
 The application will be available at http://localhost:5173/.
 
@@ -50,7 +51,7 @@ export default defineConfig({
     host: '0.0.0.0',
     port: 5173
   }
-})
+})```
 
 Then, you can access the server using your local IP address, e.g., http://192.168.100.15:5173/.
 
