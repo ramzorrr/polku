@@ -9,13 +9,40 @@ Polku Web is a web application built with React and Vite. This project is design
 - Interactive calendar to add and delete performance data
 - Responsive design for mobile and desktop
 
+## Getting Started
+
+### Prerequisites
+
+- Node.js (version 14 or higher)
+- npm or yarn
+
+### Installation
+
+1. Clone the repository:
+
+   ```sh
+   git clone https://github.com/ramzorrr/polkuweb.git
+   cd polkuweb
+   
+   
+2. Install dependencies
+   ```npm install
+   # or
+   yarn install
+
+Running the Development Server
+To start the development server, run:
+```npm run dev
+# or
+yarn dev
+
 The application will be available at http://localhost:5173/.
 
 Accessing the Server on Other Devices
 To access the development server on other devices within the same network, ensure your vite.config.ts is configured to listen on all network interfaces:
 
 // vite.config.ts
-import { defineConfig } from 'vite'
+```import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react-swc'
 
 export default defineConfig({
@@ -80,3 +107,6 @@ This README should give users a good starting point for understanding and workin
 - **License**: Specifies the project's license.
 
 This README should give users a good starting point for understanding and working with your project.
+
+
+can you fix it so the codes are always in code snippets 
