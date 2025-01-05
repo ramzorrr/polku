@@ -25,13 +25,13 @@ Polku Web is a web application built with React and Vite. This project is design
    cd polkuweb
    
 2. Install dependencies
-   npm install
+   ```npm install
    # or
    yarn install
 
 Running the Development Server
 To start the development server, run:
-npm run dev
+```npm run dev
 # or
 yarn dev
 
@@ -40,9 +40,8 @@ The application will be available at http://localhost:5173/.
 Accessing the Server on Other Devices
 To access the development server on other devices within the same network, ensure your vite.config.ts is configured to listen on all network interfaces:
 
-
 // vite.config.ts
-import { defineConfig } from 'vite'
+```import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react-swc'
 
 export default defineConfig({
