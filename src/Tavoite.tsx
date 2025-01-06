@@ -13,6 +13,7 @@ const Tavoite = ({ data, period }: { data: { [key: string]: number }, period: st
     const storedGoal = localStorage.getItem('savedGoal');
     if (storedGoal) {
       setSavedGoal(parseFloat(storedGoal));
+      console.log('Loaded saved goal:', storedGoal);
     }
   }, []);
 
@@ -29,6 +30,7 @@ const Tavoite = ({ data, period }: { data: { [key: string]: number }, period: st
     localStorage.setItem('savedGoal', goal.toString());
     setSavedGoal(goal);
     setMessage('Tavoite tallennettu');
+    console.log('Saved goal:', goal);
     setTimeout(() => setMessage(null), 3000); // Clear the message after 3 seconds
   };
 
@@ -118,6 +120,11 @@ const Tavoite = ({ data, period }: { data: { [key: string]: number }, period: st
       {message && (
         <div className="mt-4 p-2 bg-green-500 text-white rounded">
           {message}
+        </div>
+      )}
+      {savedGoal !== null && (
+        <div className="mt-4">
+          <p className="text-lg font-bold">Tallennettu tavoite: {savedGoal} {calculatePercentage(savedGoal)}%</p>
         </div>
       )}
       {savedGoal !== null && remainingAverageData && (
