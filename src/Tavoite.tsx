@@ -3,24 +3,35 @@ import DailyPerformance from './DailyPerformance';
 import DirectToGoal from './DirectToGoal';
 import RemainingWorkdays from './RemainingWorkdays';
 
-const Tavoite = ({ data, period }: { data: { [key: string]: number }, period: string }) => {
-  const [goal, setGoal] = useState(7.25);
+interface DateData {
+  performance: number;
+  hours: number;
+  overtime: boolean;
+}
+
+const Tavoite = ({
+  data,
+  period,
+}: {
+  data: { [key: string]: DateData };
+  period: string;
+}) => {
+  // Goal is now a percentage.
+  const [goal, setGoal] = useState(110); // e.g., default to 110%
   const [savedGoal, setSavedGoal] = useState<number | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
+  // For days with no data, assume a default 8-hour day (overtime off)
+  const defaultHours = 8;
+  const defaultOvertime = false;
+  const defaultEffective = defaultHours - 0.75; // = 7.25
+
   useEffect(() => {
-    // Load the saved goal from localStorage when the component mounts
     const storedGoal = localStorage.getItem('savedGoal');
     if (storedGoal) {
       setSavedGoal(parseFloat(storedGoal));
-      console.log('Loaded saved goal:', storedGoal);
     }
   }, []);
-
-  const calculatePercentage = (value: number) => {
-    const percentage = ((value - 7.25) / (10.88 - 7.25)) * 50 + 100;
-    return Math.round(percentage); // Round to the nearest integer
-  };
 
   const handleSliderChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setGoal(parseFloat(event.target.value));
@@ -30,83 +41,122 @@ const Tavoite = ({ data, period }: { data: { [key: string]: number }, period: st
     localStorage.setItem('savedGoal', goal.toString());
     setSavedGoal(goal);
     setMessage('Tavoite tallennettu');
-    console.log('Saved goal:', goal);
-    setTimeout(() => setMessage(null), 3000); // Clear the message after 3 seconds
+    setTimeout(() => setMessage(null), 3000);
   };
 
-  const countWeekdays = (startDay: number, endDay: number, fullYear: number, month: number): number => {
-    let weekdays = 0;
-    for (let i = startDay; i <= endDay; i++) {
-      const date = new Date(fullYear, month, i);
-      const dayOfWeek = date.getDay();
-      if (dayOfWeek !== 0 && dayOfWeek !== 6) {
-        weekdays++;
+  // Calculate effective hours based on the number of hours worked and overtime flag.
+  const effectiveHours = (hours: number, overtime: boolean): number => {
+    if (hours <= 8) {
+      return hours - 0.75;
+    } else {
+      if (overtime) {
+        // Only one break is deducted even if hours > 8.
+        return hours - 0.75;
+      } else {
+        // Deduct one break per (full or partial) 8-hour block.
+        const breaks = Math.ceil(hours / 8);
+        return hours - 0.75 * breaks;
       }
     }
-    return weekdays;
   };
 
   const calculateRemainingAverage = () => {
     if (savedGoal === null) return null;
-  
+
     const today = new Date();
     const fullYear = today.getFullYear();
     const month = today.getMonth();
-    const startDay = today.getDate() <= 15 ? 1 : 16;
-    const endDay = today.getDate() <= 15 ? 15 : new Date(fullYear, month + 1, 0).getDate();
-    const totalWeekdays = countWeekdays(startDay, endDay, fullYear, month);
-    const remainingWeekdays = countWeekdays(today.getDate() + 1, endDay, fullYear, month);
-  
-    // Filter data for the current period
-    const filteredDates = Object.keys(data).filter((dateString) => {
+    const dayToday = today.getDate();
+
+    // Determine period boundaries.
+    const periodStartDay = period === 'Jakso 1' ? 1 : 16;
+    const periodEndDay =
+      period === 'Jakso 1' ? 15 : new Date(fullYear, month + 1, 0).getDate();
+
+    // Sum performance and effective hours from logged days.
+    let totalEffectiveLogged = 0;
+    let totalPerformanceLogged = 0;
+    let loggedDays = 0;
+
+    Object.keys(data).forEach((dateString) => {
       const date = new Date(dateString);
-      const day = date.getDate();
-      const isCurrentPeriod =
-        period === 'Jakso 1' ? day >= 1 && day <= 15 : day >= 16;
-      return isCurrentPeriod;
+      if (date.getFullYear() === fullYear && date.getMonth() === month) {
+        const d = date.getDate();
+        if (d >= periodStartDay && d <= periodEndDay) {
+          const entry = data[dateString];
+          const eff = effectiveHours(entry.hours, entry.overtime);
+          totalEffectiveLogged += eff;
+          totalPerformanceLogged += entry.performance;
+          loggedDays++;
+        }
+      }
     });
-  
-    const total = filteredDates.reduce((sum, dateString) => sum + (data[dateString] || 0), 0);
-    const currentAverage = filteredDates.length ? total / filteredDates.length : 0;
 
-    const requiredTotal = savedGoal * totalWeekdays;
-    const requiredRemaining = requiredTotal - total;
+    // Count missing (yet-to-be logged) workdays from today onward.
+    let missingDays = 0;
+    for (let d = dayToday; d <= periodEndDay; d++) {
+      const currentDate = new Date(fullYear, month, d);
+      // Only consider weekdays.
+      if (currentDate.getDay() !== 0 && currentDate.getDay() !== 6) {
+        const dateStr = `${fullYear}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        if (!(dateStr in data)) {
+          missingDays++;
+        }
+      }
+    }
 
-    // Calculate remaining weekdays, including weekends with data
-    const remainingDays = Array.from({ length: endDay - today.getDate() }, (_, i) => today.getDate() + i + 1)
-      .filter(day => {
-        const date = new Date(fullYear, month, day);
-        const dayOfWeek = date.getDay();
-        return dayOfWeek !== 0 && dayOfWeek !== 6 || data[`${fullYear}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`];
-      }).length;
+    // Total effective hours for the period =
+    // (logged effective hours) + (missing days * default effective hours).
+    const totalEffectivePeriod = totalEffectiveLogged + missingDays * defaultEffective;
 
-    const remainingAverage = remainingWeekdays ? (requiredRemaining / remainingWeekdays).toFixed(2) : '0.00';
-    const nextDayPerformance = (savedGoal * (filteredDates.length + 1) - total).toFixed(2);
+    // The target total performance for the period is:
+    //   totalEffectivePeriod * (goal percentage / 100).
+    const targetTotalPerformance = totalEffectivePeriod * (savedGoal / 100);
+
+    // Remaining performance that must be achieved.
+    const remainingRequired = targetTotalPerformance - totalPerformanceLogged;
+
+    // For missing days (assumed to be default days), the daily required absolute performance:
+    const dailyRequiredAbsolute = missingDays > 0 ? remainingRequired / missingDays : 0;
+    // And as a percentage (relative to default effective hours):
+    const dailyRequiredPercentage = defaultEffective > 0 ? (dailyRequiredAbsolute / defaultEffective) * 100 : 0;
+
+    // Current average percentage (weighted by effective hours of logged days).
+    const currentAveragePercentage =
+      totalEffectiveLogged > 0 ? (totalPerformanceLogged / totalEffectiveLogged) * 100 : 0;
+
+    // Instantly to goal:
+    // Determine the performance (on a default day) needed so that
+    // (current performance + x) / (current effective hours + defaultEffective) = savedGoal/100.
+    const instantlyToGoalAbsolute =
+      totalEffectiveLogged + defaultEffective > 0
+        ? (savedGoal / 100) * (totalEffectiveLogged + defaultEffective) - totalPerformanceLogged
+        : 0;
+    const instantlyToGoalPercentage =
+      defaultEffective > 0 ? (instantlyToGoalAbsolute / defaultEffective) * 100 : 0;
 
     return {
-      remainingAverage,
-      nextDayPerformance,
-      currentAverage: currentAverage.toFixed(2),
-      remainingDays,
-      currentAveragePercentage: calculatePercentage(currentAverage),
-      remainingAveragePercentage: calculatePercentage(parseFloat(remainingAverage)),
-      nextDayPerformancePercentage: calculatePercentage(parseFloat(nextDayPerformance)),
+      dailyRequiredAbsolute: dailyRequiredAbsolute.toFixed(2),
+      dailyRequiredPercentage: dailyRequiredPercentage.toFixed(0),
+      currentAveragePercentage: currentAveragePercentage.toFixed(0),
+      missingDays,
+      instantlyToGoalAbsolute: instantlyToGoalAbsolute.toFixed(2),
+      instantlyToGoalPercentage: instantlyToGoalPercentage.toFixed(0),
     };
   };
 
-  const remainingAverageData = calculateRemainingAverage();
+  const remainingData = calculateRemainingAverage();
 
   return (
     <div className="flex flex-col items-center p-4">
-      <h2 className="text-2xl font-pmedium text-secondary mb-4">Aseta tavoite</h2>
       <div className="mt-4">
-        <p className="text-lg font-bold">Tavoite: {goal} {calculatePercentage(goal)}%</p>
+        <p className="text-lg font-bold">Tavoite: {goal}%</p>
       </div>
       <input
         type="range"
-        min="7.25"
-        max="10.88"
-        step="0.01"
+        min="80"
+        max="200"
+        step="1"
         value={goal}
         onChange={handleSliderChange}
         className="w-full"
@@ -122,16 +172,23 @@ const Tavoite = ({ data, period }: { data: { [key: string]: number }, period: st
           {message}
         </div>
       )}
-      {savedGoal !== null && (
-        <div className="mt-4">
-          <p className="text-lg font-bold">Tallennettu tavoite: {savedGoal} {calculatePercentage(savedGoal)}%</p>
-        </div>
-      )}
-      {savedGoal !== null && remainingAverageData && (
+      {savedGoal !== null && remainingData && (
         <div className="mt-4 grid grid-cols-1 gap-4">
-          <DailyPerformance value={remainingAverageData.remainingAverage} percentage={remainingAverageData.remainingAveragePercentage} />
-          <DirectToGoal value={remainingAverageData.nextDayPerformance} percentage={remainingAverageData.nextDayPerformancePercentage} />
-          <RemainingWorkdays days={remainingAverageData.remainingDays} />
+          <div className="p-4 bg-pink-500 text-white rounded shadow-lg">
+            <h3 className="text-lg font-bold">Jakson keskisuorite</h3>
+            <p>{remainingData.currentAveragePercentage}%</p>
+          </div>
+          <DailyPerformance
+            value={remainingData.dailyRequiredAbsolute}
+            percentage={parseInt(remainingData.dailyRequiredPercentage)}
+            label="Päivittäinen suorite"
+          />
+          <DirectToGoal
+            value={remainingData.instantlyToGoalAbsolute}
+            percentage={parseInt(remainingData.instantlyToGoalPercentage)}
+            label="Suoraan tavoitteeseen"
+          />
+          <RemainingWorkdays days={remainingData.missingDays} />
         </div>
       )}
     </div>
