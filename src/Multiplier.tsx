@@ -1,8 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const Multiplier = () => {
+  // Initialize total from localStorage (or default to 0 if nothing is saved)
+  const [total, setTotal] = useState(() => {
+    const savedTotal = localStorage.getItem('multiplierTotal');
+    return savedTotal ? parseFloat(savedTotal) : 0;
+  });
   const [inputValue, setInputValue] = useState('');
-  const [total, setTotal] = useState(0);
+
+  // Whenever the total changes, update it in localStorage.
+  useEffect(() => {
+    localStorage.setItem('multiplierTotal', total.toString());
+  }, [total]);
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
@@ -41,7 +50,7 @@ const Multiplier = () => {
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Pohja tai suorite (x)"
+          placeholder="Pohja tai suorite (esim. 20 tai (5.21))"
           className="border border-gray-300 rounded px-2 py-1"
         />
         <button
