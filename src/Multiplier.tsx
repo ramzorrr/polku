@@ -28,7 +28,7 @@ const Multiplier = () => {
       } else {
         const parsed = parseFloat(trimmed);
         if (!isNaN(parsed)) {
-          valueToAdd = parsed * 0.07;
+          valueToAdd = parsed * 0.075;
         }
       }
       
@@ -50,7 +50,7 @@ const Multiplier = () => {
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Pohja tai suorite (esim. 20 tai (5.21))"
+          placeholder="Pohja tai suorite (x)"
           className="border border-gray-300 rounded px-2 py-1"
         />
         <button

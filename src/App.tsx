@@ -144,7 +144,7 @@ const App = () => {
 
   return (
     <div className="bg-primary min-h-screen text-gray-100 flex flex-col items-center p-4">
-      <h2 className="text-2xl font-pmedium text-secondary mb-4">Paljo läjäs</h2>
+      <h2 className="text-2xl font-pmedium text-secondary mb-4">"Paljoläjäs?!"</h2>
       <div className="mb-4">
         <label className="mr-4">
           <input
