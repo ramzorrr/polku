@@ -51,7 +51,7 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
             />
           </div>
           <div className="mb-4 flex items-center">
-            <label className="block text-sm font-medium text-gray-700 mr-2">Ylitöitä:</label>
+            <label className="block text-sm font-medium text-gray-700 mr-2">Ylityö:</label>
             <input
               type="checkbox"
               name="overtime"
