@@ -5,12 +5,8 @@ import './tailwind.css';
 import './customCalendar.css';
 import Tavoite from './Tavoite';
 import Multiplier from './Multiplier';
-
-interface DateData {
-  performance: number;
-  hours: number;
-  overtime: boolean;
-}
+import { DateData, effectiveHours, computePerformancePercentage } from './utils';
+import PerformanceModal from './PerformanceModal';
 
 const App = () => {
   // Data now maps date strings to DateData objects.
@@ -18,22 +14,19 @@ const App = () => {
   const [data, setData] = useState<{ [key: string]: DateData }>({});
   const [period, setPeriod] = useState('');
   const [showModal, setShowModal] = useState(false);
-  
+
   // Form state for our modal.
   const [formData, setFormData] = useState({
     performance: '',
     hours: '8',
     overtime: false,
+    freeDay: false, // default added here
   });
 
   useEffect(() => {
     // Determine the period based on the current day on initial load.
     const currentDay = new Date().getDate();
-    if (currentDay >= 1 && currentDay <= 15) {
-      setPeriod('Jakso 1');
-    } else {
-      setPeriod('Jakso 2');
-    }
+    setPeriod(currentDay >= 1 && currentDay <= 15 ? 'Jakso 1' : 'Jakso 2');
 
     // Load any previously saved calendar data from localStorage.
     const storedData = localStorage.getItem('calendarData');
@@ -57,34 +50,10 @@ const App = () => {
     }
   };
 
-  // Helper function to compute effective hours based on hours and overtime.
-  const effectiveHoursForDate = (entry: DateData): number => {
-    if (entry.hours <= 8) {
-      return entry.hours - 0.75;
-    } else {
-      if (entry.overtime) {
-        // With overtime on, only one break is deducted.
-        return entry.hours - 0.75;
-      } else {
-        // With overtime off, deduct one break per (full or partial) 8-hour block.
-        const breaks = Math.ceil(entry.hours / 8);
-        return entry.hours - 0.75 * breaks;
-      }
-    }
-  };
-
-  // Compute the performance percentage for a given date's data.
-  const computePerformancePercentage = (entry: DateData): number => {
-    const effective = effectiveHoursForDate(entry);
-    // To avoid division by zero.
-    if (effective <= 0) return 0;
-    return Math.round((entry.performance / effective) * 100);
-  };
-
   // Modal form handlers.
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value,
     }));
@@ -92,7 +61,7 @@ const App = () => {
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const { performance, hours, overtime } = formData;
+    const { performance, hours, overtime, freeDay } = formData;
     const parsedPerformance = parseFloat(performance);
     const parsedHours = parseFloat(hours);
 
@@ -108,16 +77,21 @@ const App = () => {
     const dateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(
       date.getDate()
     ).padStart(2, '0')}`;
-    setData(prevData => ({
+    setData((prevData) => ({
       ...prevData,
-      [dateString]: { performance: parsedPerformance, hours: parsedHours, overtime }
+      [dateString]: { 
+        performance: parsedPerformance, 
+        hours: parsedHours, 
+        overtime, 
+        freeDay  // now included
+      }
     }));
     setShowModal(false);
-    // Reset the form.
     setFormData({
       performance: '',
       hours: '8',
       overtime: false,
+      freeDay: false,
     });
   };
 
@@ -125,7 +99,7 @@ const App = () => {
     const dateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(
       date.getDate()
     ).padStart(2, '0')}`;
-    setData(prevData => {
+    setData((prevData) => {
       const newData = { ...prevData };
       delete newData[dateString];
       return newData;
@@ -140,26 +114,19 @@ const App = () => {
   // Restrict the calendar to show dates in the current period.
   const filterDates = (date: Date) => {
     const day = date.getDate();
-    if (period === 'Jakso 1') {
-      return day >= 1 && day <= 15;
-    } else {
-      return day >= 16;
-    }
+    return period === 'Jakso 1' ? day >= 1 && day <= 15 : day >= 16;
   };
 
-  // A simple average calculation for logged performance values.
   const calculateAverage = () => {
     const filteredDates = Object.keys(data).filter((dateString) => {
       const dateObj = new Date(dateString + 'T00:00:00');
       return filterDates(dateObj);
     });
-
     const total = filteredDates.reduce((sum, dateString) => sum + data[dateString].performance, 0);
     const average = filteredDates.length > 0 ? total / filteredDates.length : 0;
     return average.toFixed(2);
   };
 
-  // Retain the existing percentage function for display elsewhere.
   const calculatePercentage = (value: number) => {
     const percentage = ((value - 7.25) / (10.88 - 7.25)) * 50 + 100;
     return Math.round(percentage);
@@ -177,7 +144,7 @@ const App = () => {
 
   return (
     <div className="bg-primary min-h-screen text-gray-100 flex flex-col items-center p-4">
-      <h2 className="text-2xl font-pmedium text-secondary mb-4">Paljoläjäs</h2>
+      <h2 className="text-2xl font-pmedium text-secondary mb-4">Paljo läjäs</h2>
       <div className="mb-4">
         <label className="mr-4">
           <input
@@ -198,7 +165,7 @@ const App = () => {
             onChange={() => setPeriod('Jakso 2')}
           />
           Jakso 2
-          <Multiplier/>
+          <Multiplier />
         </label>
       </div>
       <div className="bg-primary p-4 rounded-lg shadow-lg calendar-container">
@@ -212,7 +179,6 @@ const App = () => {
               date.getDate()
             ).padStart(2, '0')}`;
             if (view === 'month' && data[dateString]) {
-              // Only display the performance percentage on the tile.
               const entry = data[dateString];
               const percentage = computePerformancePercentage(entry);
               return (
@@ -246,72 +212,25 @@ const App = () => {
             Suorite: {selectedDateData.performance} ({selectedDatePercentage}%)
           </p>
           <p>
-            Työtunnit: {selectedDateData.hours} ({selectedDateData.overtime ? 'ylityö' : 'normaali'})
+            Työtunnit: {selectedDateData.hours} (
+            {selectedDateData.freeDay
+              ? 'ylityö vapaapäivänä'
+              : (selectedDateData.overtime ? 'ylityö' : 'normaali')}
+            )
           </p>
         </div>
       )}
       
       <Tavoite data={data} period={period} />
 
-      {/* Modal for entering performance data */}
       {showModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white p-6 rounded shadow-lg w-80">
-            <h3 className="text-xl font-bold mb-4">Lisää suorite</h3>
-            <form onSubmit={handleFormSubmit}>
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700">Suorite:</label>
-                <input
-                  type="number"
-                  name="performance"
-                  value={formData.performance}
-                  onChange={handleFormChange}
-                  className="mt-1 block w-full border-gray-300 rounded-md"
-                  step="1"
-                  required
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700">Työtunnit:</label>
-                <input
-                  type="number"
-                  name="hours"
-                  value={formData.hours}
-                  onChange={handleFormChange}
-                  className="mt-1 block w-full border-gray-300 rounded-md"
-                  step="1"
-                  min="4"
-                  max="16"
-                  required
-                />
-              </div>
-              <div className="mb-4 flex items-center">
-                <label className="block text-sm font-medium text-gray-700 mr-2">Ylitöitä:</label>
-                <input
-                  type="checkbox"
-                  name="overtime"
-                  checked={formData.overtime}
-                  onChange={handleFormChange}
-                  className="h-4 w-4"
-                />
-              </div>
-              <div className="flex justify-end">
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="mr-2 px-4 py-2 bg-gray-300 text-gray-700 rounded"
-                >
-                  Peruuta
-                </button>
-                <button type="submit" className="px-4 py-2 bg-secondary text-white rounded">
-                  Tallenna
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+        <PerformanceModal
+          formData={formData}
+          onFormChange={handleFormChange}
+          onSubmit={handleFormSubmit}
+          onClose={() => setShowModal(false)}
+        />
       )}
-
     </div>
   );
 };
