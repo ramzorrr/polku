@@ -17,7 +17,7 @@ const Tavoite = ({
   period: string;
 }) => {
   // Goal is now a percentage.
-  const [goal, setGoal] = useState(110); // e.g., default to 110%
+  const [goal, setGoal] = useState(100); // e.g., default to 110%
   const [savedGoal, setSavedGoal] = useState<number | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -154,8 +154,8 @@ const Tavoite = ({
       </div>
       <input
         type="range"
-        min="80"
-        max="200"
+        min="100"
+        max="150"
         step="1"
         value={goal}
         onChange={handleSliderChange}
