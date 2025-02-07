@@ -232,12 +232,6 @@ const App = () => {
         </div>
       )}
 
-      <div className="mt-4 p-4 bg-gray-800 text-white rounded shadow-lg">
-        <h3 className="text-lg font-bold">Jakson keskisuorite</h3>
-        <p>
-          {average} ({averagePercentage}%)
-        </p>
-      </div>
 
       <Tavoite data={data} period={period} />
 
