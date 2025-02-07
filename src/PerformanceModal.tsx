@@ -190,6 +190,12 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
               name="performance"
               value={formData.performance}
               onChange={onFormChange}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  onSubmit(e);
+                }
+              }}
               className="mt-1 block w-full border border-gray-300 rounded-md"
               step="1"
               required

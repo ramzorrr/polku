@@ -119,7 +119,7 @@ const App = () => {
     setShowModal(false);
     setFormData({
       performance: '',
-      hours: '8.00',
+      hours: '8',
       overtime: false,
       freeDay: false,
       startTime: '',
