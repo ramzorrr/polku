@@ -1,3 +1,5 @@
+// PerformanceModal.tsx
+
 import React, { useState, useEffect, useRef } from 'react';
 import NightShiftPicker from './NightShiftPicker';
 import MorningShiftPicker from './MorningShiftPicker';
@@ -10,8 +12,8 @@ interface PerformanceModalProps {
     hours: string;
     overtime: boolean;
     freeDay: boolean;
-    startTime?: string; // e.g., "21:45"
-    endTime?: string;   // e.g., "06:15"
+    startTime?: string; // e.g. "21:45"
+    endTime?: string;   // e.g. "06:15"
   };
   defaultShift: 'morning' | 'evening' | 'night';
   onFormChange: (e: any) => void; // using "any" for synthetic events
@@ -48,70 +50,60 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
   // Initialize the shift from the defaultShift prop.
   const [shift, setShift] = useState<'morning' | 'evening' | 'night'>(defaultShift);
 
-  // Fallback default start times for each shift.
+  // A set of fallback default start times for each shift.
   const defaultStartTimes: Record<'morning' | 'evening' | 'night', string> = {
     morning: "05:45",
     evening: "13:45",
     night: "21:45",
   };
 
-  // Ref for auto-focusing the performance input.
+  // Create a ref for the performance input field.
   const performanceInputRef = useRef<HTMLInputElement>(null);
+
+  // Automatically focus the performance input field when the modal mounts.
   useEffect(() => {
     performanceInputRef.current?.focus();
   }, []);
 
-  // NEW: Flag to indicate if the user manually edited the hours field.
-  const [manualHoursOverride, setManualHoursOverride] = useState(false);
-
-  // When sign-in time changes, update formData and (if not manually overridden) recompute hours.
+  // When sign-in time changes, update formData and recompute hours.
   const handleStartTime = (newVal: string) => {
     onFormChange({ target: { name: 'startTime', value: newVal } } as any);
-    // Only auto-calc hours if we have an end time and no manual override.
-    if (formData.endTime && !manualHoursOverride) {
-      const hours = computeHoursFromTimes(newVal, formData.endTime);
-      onFormChange({ target: { name: 'hours', value: hours.toFixed(2) } } as any);
-    }
+    // We compute hours only if sign-out time is available.
+    const endVal = formData.endTime || '';
+    const hours = newVal && endVal ? computeHoursFromTimes(newVal, endVal) : 8;
+    onFormChange({ target: { name: 'hours', value: hours.toFixed(2) } } as any);
   };
 
-  // When sign-out time changes, update formData and (if not manually overridden) recompute hours.
+  // When sign-out time changes, update formData and recompute hours.
   const handleEndTime = (newVal: string) => {
     onFormChange({ target: { name: 'endTime', value: newVal } } as any);
+    // Use formData.startTime if available; otherwise, use a fallback default based on the current shift.
     const sVal =
       formData.startTime && formData.startTime.trim() !== ''
         ? formData.startTime
         : defaultStartTimes[shift];
-    if (!manualHoursOverride) {
-      const hours = computeHoursFromTimes(sVal, newVal);
-      onFormChange({ target: { name: 'hours', value: hours.toFixed(2) } } as any);
-    }
+    const hours = sVal && newVal ? computeHoursFromTimes(sVal, newVal) : 8;
+    onFormChange({ target: { name: 'hours', value: hours.toFixed(2) } } as any);
   };
 
   // When the user changes the shift manually.
   const handleShiftChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newShift = e.target.value as 'morning' | 'evening' | 'night';
     setShift(newShift);
-    // Reset times and hours, and clear the manual override flag.
+    // Optionally reset times/hours when the shift changes.
     onFormChange({ target: { name: 'startTime', value: '' } } as any);
     onFormChange({ target: { name: 'endTime', value: '' } } as any);
-    onFormChange({ target: { name: 'hours', value: '8.00' } } as any);
-    setManualHoursOverride(false);
+    onFormChange({ target: { name: 'hours', value: '8' } } as any);
   };
 
-  // When the hours field is changed manually, set the override flag.
-  const handleHoursChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setManualHoursOverride(true);
-    onFormChange(e);
-  };
-
-  // Optional: useEffect to recalc hours when start/end times change (only if not manually overridden)
+  // Automatically refresh computed hours whenever startTime or endTime change.
   useEffect(() => {
-    if (formData.startTime && formData.endTime && !manualHoursOverride) {
+    if (formData.startTime && formData.endTime) {
       const sVal = formData.startTime.trim() !== '' ? formData.startTime : defaultStartTimes[shift];
       const hours = computeHoursFromTimes(sVal, formData.endTime);
       onFormChange({ target: { name: 'hours', value: hours.toFixed(2) } } as any);
     }
-  }, [formData.startTime, formData.endTime, shift, manualHoursOverride, onFormChange]);
+  }, [formData.startTime, formData.endTime, shift, onFormChange]);
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50" lang="fi-FI">
@@ -122,15 +114,33 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
           <div className="mb-4">
             <p className="font-semibold mb-2">Valitse vuoro:</p>
             <label className="mr-4">
-              <input type="radio" name="shift" value="morning" checked={shift === 'morning'} onChange={handleShiftChange} />
+              <input
+                type="radio"
+                name="shift"
+                value="morning"
+                checked={shift === 'morning'}
+                onChange={handleShiftChange}
+              />
               Aamuvuoro
             </label>
             <label className="mr-4">
-              <input type="radio" name="shift" value="evening" checked={shift === 'evening'} onChange={handleShiftChange} />
+              <input
+                type="radio"
+                name="shift"
+                value="evening"
+                checked={shift === 'evening'}
+                onChange={handleShiftChange}
+              />
               Iltavuoro
             </label>
             <label className="mr-4">
-              <input type="radio" name="shift" value="night" checked={shift === 'night'} onChange={handleShiftChange} />
+              <input
+                type="radio"
+                name="shift"
+                value="night"
+                checked={shift === 'night'}
+                onChange={handleShiftChange}
+              />
               Yövuoro
             </label>
           </div>
@@ -139,11 +149,20 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
           <div className="mb-4">
             <p className="font-semibold mb-2">Kirjautumisaika (sign in):</p>
             {shift === 'night' ? (
-              <NightShiftPicker onChangeStartTime={handleStartTime} onChangeEndTime={() => {}} />
+              <NightShiftPicker
+                onChangeStartTime={handleStartTime}
+                onChangeEndTime={() => {}}
+              />
             ) : shift === 'morning' ? (
-              <MorningShiftPicker onChangeStartTime={handleStartTime} onChangeEndTime={() => {}} />
+              <MorningShiftPicker
+                onChangeStartTime={handleStartTime}
+                onChangeEndTime={() => {}}
+              />
             ) : shift === 'evening' ? (
-              <EveningShiftPicker onChangeStartTime={handleStartTime} onChangeEndTime={() => {}} />
+              <EveningShiftPicker
+                onChangeStartTime={handleStartTime}
+                onChangeEndTime={() => {}}
+              />
             ) : null}
           </div>
 
@@ -171,12 +190,6 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
               name="performance"
               value={formData.performance}
               onChange={onFormChange}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && (e.target as HTMLInputElement).name === "performance") {
-                  e.preventDefault();
-                  onSubmit(e);
-                }
-              }}
               className="mt-1 block w-full border border-gray-300 rounded-md"
               step="1"
               required
@@ -189,8 +202,8 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
             <input
               type="number"
               name="hours"
-              value={formData.hours || "8.00"}
-              onChange={handleHoursChange}
+              value={formData.hours}
+              onChange={onFormChange}
               className="mt-1 block w-full border border-gray-300 rounded-md"
               step="any"
               min="0"
@@ -223,7 +236,11 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
 
           {/* BUTTONS */}
           <div className="flex justify-end">
-            <button type="button" onClick={onClose} className="mr-2 px-4 py-2 bg-gray-300 text-gray-700 rounded">
+            <button
+              type="button"
+              onClick={onClose}
+              className="mr-2 px-4 py-2 bg-gray-300 text-gray-700 rounded"
+            >
               Peruuta
             </button>
             <button type="submit" className="px-4 py-2 bg-secondary text-white rounded">

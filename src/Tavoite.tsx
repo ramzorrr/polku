@@ -46,55 +46,7 @@ const Tavoite = ({
     setTimeout(() => setMessage(null), 3000);
   };
 
-  // (The effectiveHours and computePerformancePercentage functions are now imported from utils.)
 
-  // Modal form state now includes the new "freeDay" toggle.
-  const [showModal, setShowModal] = useState(false);
-  const [formData, setFormData] = useState({
-    performance: '',
-    hours: '8',
-    overtime: false,
-    freeDay: false,
-  });
-
-  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value,
-    }));
-  };
-
-  const handleFormSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const { performance, hours, overtime, freeDay } = formData;
-    const parsedPerformance = parseFloat(performance);
-    const parsedHours = parseFloat(hours);
-
-    if (isNaN(parsedPerformance)) {
-      alert("Lisää suorite esim. 7.25");
-      return;
-    }
-    if (isNaN(parsedHours) || parsedHours < 1 || parsedHours > 16) {
-      alert("Työajan pitää olla vähintään tunnin ja enintään 16 tuntia.");
-      return;
-    }
-
-    const dateString = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`;
-    // Here, we assume that the parent component is responsible for updating the data.
-    // For demonstration, this update is commented out.
-    // setData(prevData => ({
-    //   ...prevData,
-    //   [dateString]: { performance: parsedPerformance, hours: parsedHours, overtime, freeDay },
-    // }));
-    setShowModal(false);
-    setFormData({
-      performance: '',
-      hours: '8',
-      overtime: false,
-      freeDay: false,
-    });
-  };
 
   // (handleDeleteData, formatDate, filterDates, calculateAverage, and calculatePercentage remain unchanged.)
 

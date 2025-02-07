@@ -28,7 +28,7 @@ const App = () => {
   // Form state for the modal.
   const [formData, setFormData] = useState({
     performance: '',
-    hours: '8.00',
+    hours: '8',
     overtime: false,
     freeDay: false,
     startTime: '',
