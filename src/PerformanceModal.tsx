@@ -1,6 +1,6 @@
 // PerformanceModal.tsx
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import NightShiftPicker from './NightShiftPicker';
 import MorningShiftPicker from './MorningShiftPicker';
 import EveningShiftPicker from './EveningShiftPicker';
@@ -50,30 +50,36 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
   // Initialize the shift from the defaultShift prop.
   const [shift, setShift] = useState<'morning' | 'evening' | 'night'>(defaultShift);
 
-  // A set of fallback default start times for each shift
+  // A set of fallback default start times for each shift.
   const defaultStartTimes: Record<'morning' | 'evening' | 'night', string> = {
     morning: "05:45",
     evening: "13:45",
     night: "21:45",
   };
 
+  // Create a ref for the performance input field.
+  const performanceInputRef = useRef<HTMLInputElement>(null);
+
+  // Automatically focus the performance input when the component mounts.
+  useEffect(() => {
+    performanceInputRef.current?.focus();
+  }, []);
+
   // When sign-in time changes, update formData and recompute hours.
   const handleStartTime = (newVal: string) => {
     onFormChange({ target: { name: 'startTime', value: newVal } } as any);
-    // We compute hours only if sign-out time is available.
     const endVal = formData.endTime || '';
-    const hours = computeHoursFromTimes(newVal, endVal);
+    const hours = newVal && endVal ? computeHoursFromTimes(newVal, endVal) : 8;
     onFormChange({ target: { name: 'hours', value: hours.toFixed(2) } } as any);
   };
 
   // When sign-out time changes, update formData and recompute hours.
   const handleEndTime = (newVal: string) => {
     onFormChange({ target: { name: 'endTime', value: newVal } } as any);
-    // Use formData.startTime if available; otherwise, use a fallback default based on the current shift.
     const sVal = formData.startTime && formData.startTime.trim() !== ''
       ? formData.startTime
       : defaultStartTimes[shift];
-    const hours = computeHoursFromTimes(sVal, newVal);
+    const hours = sVal && newVal ? computeHoursFromTimes(sVal, newVal) : 8;
     onFormChange({ target: { name: 'hours', value: hours.toFixed(2) } } as any);
   };
 
@@ -81,10 +87,9 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
   const handleShiftChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newShift = e.target.value as 'morning' | 'evening' | 'night';
     setShift(newShift);
-    // Optionally reset times/hours when the shift changes.
     onFormChange({ target: { name: 'startTime', value: '' } } as any);
     onFormChange({ target: { name: 'endTime', value: '' } } as any);
-    onFormChange({ target: { name: 'hours', value: '8' } } as any);
+    onFormChange({ target: { name: 'hours', value: '8.00' } } as any);
   };
 
   // Automatically refresh computed hours whenever startTime or endTime change.
@@ -93,6 +98,8 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
       const sVal = formData.startTime.trim() !== '' ? formData.startTime : defaultStartTimes[shift];
       const hours = computeHoursFromTimes(sVal, formData.endTime);
       onFormChange({ target: { name: 'hours', value: hours.toFixed(2) } } as any);
+    } else {
+      onFormChange({ target: { name: 'hours', value: "8.00" } } as any);
     }
   }, [formData.startTime, formData.endTime, shift, onFormChange]);
 
@@ -138,7 +145,7 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
 
           {/* SHIFT-BASED SIGN-IN TIME PICKER */}
           <div className="mb-4">
-            <p className="font-semibold mb-2">Kirjautumisaika:</p>
+            <p className="font-semibold mb-2">Kirjautumisaika (sign in):</p>
             {shift === 'night' ? (
               <NightShiftPicker
                 onChangeStartTime={handleStartTime}
@@ -159,7 +166,7 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
 
           {/* FREE SIGN-OUT TIME using react-time-picker in 24h format */}
           <div className="mb-4">
-            <p className="font-semibold mb-2">Uloskirjautuminen jos pidempi työaika</p>
+            <p className="font-semibold mb-2">Kirjaudu ulos (sign out):</p>
             <TimePicker
               onChange={(val) => handleEndTime(val || '')}
               value={formData.endTime || ''}
@@ -176,10 +183,17 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700">Suorite:</label>
             <input
+              ref={performanceInputRef}
               type="number"
               name="performance"
               value={formData.performance}
               onChange={onFormChange}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  onSubmit(e);
+                }
+              }}
               className="mt-1 block w-full border border-gray-300 rounded-md"
               step="1"
               required
@@ -192,10 +206,10 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
             <input
               type="number"
               name="hours"
-              value={formData.hours}
+              value={formData.hours || "8.00"}
               onChange={onFormChange}
               className="mt-1 block w-full border border-gray-300 rounded-md"
-              step="0.01"
+              step="any"
               min="0"
               max="24"
               required

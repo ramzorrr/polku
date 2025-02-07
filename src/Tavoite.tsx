@@ -5,9 +5,6 @@ import RemainingWorkdays from './RemainingWorkdays';
 import { DateData, effectiveHours, computePerformancePercentage, calculateAverage, calculatePercentage } from './utils';
 
 
-
-
-
 const Tavoite = ({
   data,
   period,
