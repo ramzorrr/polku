@@ -94,7 +94,7 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
       target: { name: 'endTime', value: '', type: 'text' } as React.ChangeEvent<HTMLInputElement>['target'],
     } as React.ChangeEvent<HTMLInputElement>);
     onFormChange({
-      target: { name: 'hours', value: '0.00', type: 'text' } as React.ChangeEvent<HTMLInputElement>['target'],
+      target: { name: 'hours', value: '8.00', type: 'text' } as React.ChangeEvent<HTMLInputElement>['target'],
     } as React.ChangeEvent<HTMLInputElement>);
   };
 
