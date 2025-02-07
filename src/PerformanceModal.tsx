@@ -168,7 +168,7 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
               clearIcon={null}
             />
             <p className="text-xs text-gray-600">
-              Jos uloskirjautuminen on myöhemmin kuin normaalisti, lisää
+              Lisää aika, jolloin oman vuoron yli menevä työaika päättyy.
             </p>
           </div>
 

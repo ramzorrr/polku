@@ -2,7 +2,11 @@ import React, { useState, useEffect } from 'react';
 import DailyPerformance from './DailyPerformance';
 import DirectToGoal from './DirectToGoal';
 import RemainingWorkdays from './RemainingWorkdays';
-import { DateData, effectiveHours, computePerformancePercentage } from './utils';
+import { DateData, effectiveHours, computePerformancePercentage, calculateAverage, calculatePercentage } from './utils';
+
+
+
+
 
 const Tavoite = ({
   data,
@@ -71,11 +75,11 @@ const Tavoite = ({
     const parsedHours = parseFloat(hours);
 
     if (isNaN(parsedPerformance)) {
-      alert("Please enter a valid number for performance.");
+      alert("Lisää suorite esim. 7.25");
       return;
     }
-    if (isNaN(parsedHours) || parsedHours < 4 || parsedHours > 16) {
-      alert("Please enter a valid number for hours (4-16).");
+    if (isNaN(parsedHours) || parsedHours < 1 || parsedHours > 16) {
+      alert("Työajan pitää olla vähintään tunnin ja enintään 16 tuntia.");
       return;
     }
 
@@ -112,23 +116,6 @@ const Tavoite = ({
     return period === 'Jakso 1' ? day >= 1 && day <= 15 : day >= 16;
   };
 
-  const calculateAverage = (): string => {
-    const filteredDates = Object.keys(data).filter((dateString) => {
-      const dateObj = new Date(dateString + 'T00:00:00');
-      return filterDates(dateObj);
-    });
-    const total = filteredDates.reduce((sum, dateString) => sum + data[dateString].performance, 0);
-    const average = filteredDates.length > 0 ? total / filteredDates.length : 0;
-    return average.toFixed(2);
-  };
-
-  const calculatePercentage = (value: number): number => {
-    const percentage = ((value - 7.25) / (10.88 - 7.25)) * 50 + 100;
-    return Math.round(percentage);
-  };
-
-  const average = parseFloat(calculateAverage());
-  const averagePercentage = calculatePercentage(average);
 
   const selectedDateString = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`;
   const selectedDateData = data[selectedDateString];
