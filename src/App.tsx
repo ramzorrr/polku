@@ -26,6 +26,8 @@ const App = () => {
     hours: '8',
     overtime: false,
     freeDay: false,
+    startTime: '',
+    endTime: '',
   });
 
   // 1) Helper function to detect ongoing shift based on current local time
@@ -42,13 +44,13 @@ const App = () => {
     // Convert hr/min to total minutes from midnight for easy comparison
     const totalMins = hr * 60 + min;
 
-    // Helper for e.g. "05:45" => 345
+    // Helper for e.g. "05:45" => 
     const timeToMins = (h: number, m: number) => h * 60 + m;
 
-    const morningStart = timeToMins(5, 45);   // 345
-    const morningEnd   = timeToMins(14, 15);  // 855
-    const eveningStart = timeToMins(13, 45);  // 825
-    const eveningEnd   = timeToMins(22, 15);  // 1335
+    const morningStart = timeToMins(5, 45);   
+    const morningEnd   = timeToMins(14, 15);  
+    const eveningStart = timeToMins(13, 45);  
+    const eveningEnd   = timeToMins(22, 15); 
 
     // We'll define a small inRange helper
     const inRange = (t: number, start: number, end: number) => t >= start && t < end;
@@ -100,10 +102,9 @@ const App = () => {
 
   // Modal form handlers.
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value,
+      [e.target.name]: e.target.value,
     }));
   };
 
@@ -140,6 +141,8 @@ const App = () => {
       hours: '8',
       overtime: false,
       freeDay: false,
+      startTime: '',
+      endTime: '',
     });
   };
 

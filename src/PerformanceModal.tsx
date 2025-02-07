@@ -1,12 +1,12 @@
 // PerformanceModal.tsx
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import NightShiftPicker from './NightShiftPicker';
 import MorningShiftPicker from './MorningShiftPicker';
 import EveningShiftPicker from './EveningShiftPicker';
+import TimePicker from 'react-time-picker';
 
 interface PerformanceModalProps {
-  // Basic performance form data
   formData: {
     performance: string;
     hours: string;
@@ -15,17 +15,15 @@ interface PerformanceModalProps {
     startTime?: string; // e.g. "21:45"
     endTime?: string;   // e.g. "06:15"
   };
-  // The shift we want to select by default
   defaultShift: 'morning' | 'evening' | 'night';
-
-  onFormChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onFormChange: (e: any) => void; // using "any" for synthetic events
   onSubmit: (e: React.FormEvent) => void;
   onClose: () => void;
 }
 
 /**
- * Helper to compute hours across midnight if sign-in is ~21..22 and sign-out is ~05..06,
- * or any shift that might cross midnight.
+ * Computes the difference (in hours) between two times in "HH:mm" format.
+ * If the end time is earlier than the start time, assumes the end time is on the next day.
  */
 function computeHoursFromTimes(start: string, end: string): number {
   if (!start || !end) return 0;
@@ -34,12 +32,9 @@ function computeHoursFromTimes(start: string, end: string): number {
 
   const startDate = new Date(0, 0, 0, sh, sm);
   let endDate = new Date(0, 0, 0, eh, em);
-
-  // If end < start, assume next day
   if (eh < sh) {
-    endDate = new Date(0, 0, 1, eh, em); // plus 24h
+    endDate = new Date(0, 0, 1, eh, em); // assume next day
   }
-
   let diff = (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60);
   if (diff < 0) diff = 0;
   return diff;
@@ -52,57 +47,59 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
   onSubmit,
   onClose,
 }) => {
-  // Start with the shift from defaultShift
-  const [shift, setShift] = useState(defaultShift);
+  // Initialize the shift from the defaultShift prop.
+  const [shift, setShift] = useState<'morning' | 'evening' | 'night'>(defaultShift);
 
-  // Called whenever the user picks a new "start time" in any of the shift pickers
+  // A set of fallback default start times for each shift
+  const defaultStartTimes: Record<'morning' | 'evening' | 'night', string> = {
+    morning: "05:45",
+    evening: "13:45",
+    night: "21:45",
+  };
+
+  // When sign-in time changes, update formData and recompute hours.
   const handleStartTime = (newVal: string) => {
-    onFormChange({
-      target: { name: 'startTime', value: newVal, type: 'text' } as React.ChangeEvent<HTMLInputElement>['target'],
-    } as React.ChangeEvent<HTMLInputElement>);
-
+    onFormChange({ target: { name: 'startTime', value: newVal } } as any);
+    // We compute hours only if sign-out time is available.
     const endVal = formData.endTime || '';
     const hours = computeHoursFromTimes(newVal, endVal);
-    onFormChange({
-      target: { name: 'hours', value: hours.toFixed(2), type: 'text' } as React.ChangeEvent<HTMLInputElement>['target'],
-    } as React.ChangeEvent<HTMLInputElement>);
+    onFormChange({ target: { name: 'hours', value: hours.toFixed(2) } } as any);
   };
 
-  // Called whenever the user picks a new "end time"
+  // When sign-out time changes, update formData and recompute hours.
   const handleEndTime = (newVal: string) => {
-    onFormChange({
-      target: { name: 'endTime', value: newVal, type: 'text' } as React.ChangeEvent<HTMLInputElement>['target'],
-    } as React.ChangeEvent<HTMLInputElement>);
-
-    const startVal = formData.startTime || '';
-    const hours = computeHoursFromTimes(startVal, newVal);
-    onFormChange({
-      target: { name: 'hours', value: hours.toFixed(2), type: 'text' } as React.ChangeEvent<HTMLInputElement>['target'],
-    } as React.ChangeEvent<HTMLInputElement>);
+    onFormChange({ target: { name: 'endTime', value: newVal } } as any);
+    // Use formData.startTime if available; otherwise, use a fallback default based on the current shift.
+    const sVal = formData.startTime && formData.startTime.trim() !== ''
+      ? formData.startTime
+      : defaultStartTimes[shift];
+    const hours = computeHoursFromTimes(sVal, newVal);
+    onFormChange({ target: { name: 'hours', value: hours.toFixed(2) } } as any);
   };
 
-  // If the user manually changes shift via radio buttons
+  // When the user changes the shift manually.
   const handleShiftChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newShift = e.target.value as 'morning' | 'evening' | 'night';
     setShift(newShift);
-
-    // Optionally reset times/hours
-    onFormChange({
-      target: { name: 'startTime', value: '', type: 'text' } as React.ChangeEvent<HTMLInputElement>['target'],
-    } as React.ChangeEvent<HTMLInputElement>);
-    onFormChange({
-      target: { name: 'endTime', value: '', type: 'text' } as React.ChangeEvent<HTMLInputElement>['target'],
-    } as React.ChangeEvent<HTMLInputElement>);
-    onFormChange({
-      target: { name: 'hours', value: '8.00', type: 'text' } as React.ChangeEvent<HTMLInputElement>['target'],
-    } as React.ChangeEvent<HTMLInputElement>);
+    // Optionally reset times/hours when the shift changes.
+    onFormChange({ target: { name: 'startTime', value: '' } } as any);
+    onFormChange({ target: { name: 'endTime', value: '' } } as any);
+    onFormChange({ target: { name: 'hours', value: '8' } } as any);
   };
 
+  // Automatically refresh computed hours whenever startTime or endTime change.
+  useEffect(() => {
+    if (formData.startTime && formData.endTime) {
+      const sVal = formData.startTime.trim() !== '' ? formData.startTime : defaultStartTimes[shift];
+      const hours = computeHoursFromTimes(sVal, formData.endTime);
+      onFormChange({ target: { name: 'hours', value: hours.toFixed(2) } } as any);
+    }
+  }, [formData.startTime, formData.endTime, shift, onFormChange]);
+
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50" lang="fi-FI">
       <div className="bg-white p-6 rounded shadow-lg w-80">
         <h3 className="text-xl font-bold mb-4">Lisää suorite</h3>
-
         <form onSubmit={onSubmit}>
           {/* SHIFT SELECTION */}
           <div className="mb-4">
@@ -139,27 +136,43 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
             </label>
           </div>
 
-          {/* SHIFT-BASED PICKER */}
+          {/* SHIFT-BASED SIGN-IN TIME PICKER */}
           <div className="mb-4">
+            <p className="font-semibold mb-2">Kirjautumisaika:</p>
             {shift === 'night' ? (
               <NightShiftPicker
                 onChangeStartTime={handleStartTime}
-                onChangeEndTime={handleEndTime}
+                onChangeEndTime={() => {}}
               />
             ) : shift === 'morning' ? (
               <MorningShiftPicker
                 onChangeStartTime={handleStartTime}
-                onChangeEndTime={handleEndTime}
+                onChangeEndTime={() => {}}
               />
             ) : shift === 'evening' ? (
               <EveningShiftPicker
                 onChangeStartTime={handleStartTime}
-                onChangeEndTime={handleEndTime}
+                onChangeEndTime={() => {}}
               />
             ) : null}
           </div>
 
-          {/* Performance */}
+          {/* FREE SIGN-OUT TIME using react-time-picker in 24h format */}
+          <div className="mb-4">
+            <p className="font-semibold mb-2">Uloskirjautuminen jos pidempi työaika</p>
+            <TimePicker
+              onChange={(val) => handleEndTime(val || '')}
+              value={formData.endTime || ''}
+              disableClock={true}
+              format="HH:mm"
+              clearIcon={null}
+            />
+            <p className="text-xs text-gray-600">
+              Jos uloskirjautuminen on myöhemmin kuin normaalisti, lisää
+            </p>
+          </div>
+
+          {/* PERFORMANCE */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700">Suorite:</label>
             <input
@@ -173,7 +186,7 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
             />
           </div>
 
-          {/* Hours */}
+          {/* HOURS */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700">Työtunnit:</label>
             <input
@@ -189,7 +202,7 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
             />
           </div>
 
-          {/* Overtime & FreedDay */}
+          {/* OVERTIME & FREE DAY */}
           <div className="mb-4 flex items-center">
             <label className="block text-sm font-medium text-gray-700 mr-2">Ylityö:</label>
             <input
@@ -201,9 +214,7 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
             />
           </div>
           <div className="mb-4 flex items-center">
-            <label className="block text-sm font-medium text-gray-700 mr-2">
-              Ylityö vapaapäivänä:
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mr-2">Ylityö vapaapäivänä:</label>
             <input
               type="checkbox"
               name="freeDay"
@@ -213,7 +224,7 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
             />
           </div>
 
-          {/* Buttons */}
+          {/* BUTTONS */}
           <div className="flex justify-end">
             <button
               type="button"
@@ -222,10 +233,7 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
             >
               Peruuta
             </button>
-            <button
-              type="submit"
-              className="px-4 py-2 bg-secondary text-white rounded"
-            >
+            <button type="submit" className="px-4 py-2 bg-secondary text-white rounded">
               Tallenna
             </button>
           </div>

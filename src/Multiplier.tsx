@@ -61,7 +61,7 @@ const Multiplier = () => {
         </button>
       </div>
       <div className="mt-2">
-        <strong>Total: </strong>
+        <strong>Yhteensä: </strong>
         {total.toFixed(2)}
       </div>
     </div>
