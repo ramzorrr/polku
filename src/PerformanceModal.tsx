@@ -5,6 +5,8 @@ import NightShiftPicker from './NightShiftPicker';
 import MorningShiftPicker from './MorningShiftPicker';
 import EveningShiftPicker from './EveningShiftPicker';
 import TimePicker from 'react-time-picker';
+import 'react-clock/dist/Clock.css';
+import Clock from 'react-clock';
 
 interface PerformanceModalProps {
   formData: {
@@ -96,6 +98,8 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
     onFormChange({ target: { name: 'hours', value: '8' } } as any);
   };
 
+  const [timeValue, setTimeValue] = useState(new Date());
+  
   // Automatically refresh computed hours whenever startTime or endTime change.
   useEffect(() => {
     if (formData.startTime && formData.endTime) {
@@ -169,12 +173,13 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
           {/* FREE SIGN-OUT TIME using react-time-picker in 24h format */}
           <div className="mb-4">
             <p className="font-semibold mb-2">Kirjaudu ulos:</p>
-            <TimePicker
-              onChange={(val) => handleEndTime(val || '')}
+            <input
+              type="time"
               value={formData.endTime || ''}
-              disableClock={true}
-              format="HH:mm"
-              clearIcon={null}
+              onChange={(e) => handleEndTime(e.target.value)}
+              className="border border-gray-300 rounded-md p-2 text-lg focus:ring-2 focus:ring-secondary focus:outline-none"
+              aria-label="Kirjaudu ulos"
+              step={60}
             />
             <p className="text-xs text-black">
               Lisää aika, jolloin oman vuoron yli menevä työaika päättyy.
