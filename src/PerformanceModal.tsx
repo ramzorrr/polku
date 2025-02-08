@@ -1,12 +1,4 @@
-// PerformanceModal.tsx
-
 import React, { useState, useEffect, useRef } from 'react';
-import NightShiftPicker from './NightShiftPicker';
-import MorningShiftPicker from './MorningShiftPicker';
-import EveningShiftPicker from './EveningShiftPicker';
-import TimePicker from 'react-time-picker';
-import 'react-clock/dist/Clock.css';
-import Clock from 'react-clock';
 
 interface PerformanceModalProps {
   formData: {
@@ -14,8 +6,8 @@ interface PerformanceModalProps {
     hours: string;
     overtime: boolean;
     freeDay: boolean;
-    startTime?: string; // e.g. "21:45"
-    endTime?: string;   // e.g. "06:15"
+    startTime?: string; // e.g., "21:45"
+    endTime?: string;   // e.g., "06:15"
   };
   defaultShift: 'morning' | 'evening' | 'night';
   onFormChange: (e: any) => void; // using "any" for synthetic events
@@ -31,15 +23,50 @@ function computeHoursFromTimes(start: string, end: string): number {
   if (!start || !end) return 0;
   const [sh, sm] = start.split(':').map(Number);
   const [eh, em] = end.split(':').map(Number);
-
   const startDate = new Date(0, 0, 0, sh, sm);
   let endDate = new Date(0, 0, 0, eh, em);
   if (eh < sh) {
     endDate = new Date(0, 0, 1, eh, em); // assume next day
   }
   let diff = (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60);
-  if (diff < 0) diff = 0;
-  return diff;
+  return diff < 0 ? 0 : diff;
+}
+
+/**
+ * Adds a given number of hours to a time string ("HH:mm") and returns the result in "HH:mm" format.
+ */
+function addHours(time: string, hoursToAdd: number): string {
+  const [hourStr, minuteStr] = time.split(':');
+  const hour = parseInt(hourStr, 10);
+  const minute = parseInt(minuteStr, 10);
+  const date = new Date(0, 0, 0, hour, minute);
+  date.setHours(date.getHours() + hoursToAdd);
+  const newHour = date.getHours().toString().padStart(2, '0');
+  const newMinute = date.getMinutes().toString().padStart(2, '0');
+  return `${newHour}:${newMinute}`;
+}
+
+/**
+ * Determines a default sign‑in time based on the current local time.
+ * Example boundaries:
+ *   - If current time is between 05:45 and 14:15, default is "05:45" (morning)
+ *   - If current time is between 13:45 and 22:15, default is "13:45" (evening)
+ *   - Otherwise, default is "21:45" (night)
+ */
+function getDefaultStartTime(): string {
+  const now = new Date();
+  const totalMins = now.getHours() * 60 + now.getMinutes();
+  const morningStart = 5 * 60 + 45;  
+  const morningEnd = 14 * 60 + 15; 
+  const eveningStart = 13 * 60 + 45; 
+  const eveningEnd = 22 * 60 + 15; 
+  if (totalMins >= morningStart && totalMins < morningEnd) {
+    return "05:45";
+  } else if (totalMins >= eveningStart && totalMins < eveningEnd) {
+    return "13:45";
+  } else {
+    return "21:45";
+  }
 }
 
 const PerformanceModal: React.FC<PerformanceModalProps> = ({
@@ -49,137 +76,101 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
   onSubmit,
   onClose,
 }) => {
-  // Initialize the shift from the defaultShift prop.
-  const [shift, setShift] = useState<'morning' | 'evening' | 'night'>(defaultShift);
-
-  // A set of fallback default start times for each shift.
-  const defaultStartTimes: Record<'morning' | 'evening' | 'night', string> = {
-    morning: "05:45",
-    evening: "13:45",
-    night: "21:45",
-  };
-
-  // Create a ref for the performance input field.
+  // Create a ref for auto-focusing the performance input.
   const performanceInputRef = useRef<HTMLInputElement>(null);
-
-  // Automatically focus the performance input field when the modal mounts.
   useEffect(() => {
     performanceInputRef.current?.focus();
   }, []);
 
-  // When sign-in time changes, update formData and recompute hours.
-  const handleStartTime = (newVal: string) => {
-    onFormChange({ target: { name: 'startTime', value: newVal } } as any);
-    // We compute hours only if sign-out time is available.
-    const endVal = formData.endTime || '';
-    const hours = newVal && endVal ? computeHoursFromTimes(newVal, endVal) : 8;
-    onFormChange({ target: { name: 'hours', value: hours.toFixed(2) } } as any);
-  };
-
-  // When sign-out time changes, update formData and recompute hours.
-  const handleEndTime = (newVal: string) => {
-    onFormChange({ target: { name: 'endTime', value: newVal } } as any);
-    // Use formData.startTime if available; otherwise, use a fallback default based on the current shift.
-    const sVal =
-      formData.startTime && formData.startTime.trim() !== ''
-        ? formData.startTime
-        : defaultStartTimes[shift];
-    const hours = sVal && newVal ? computeHoursFromTimes(sVal, newVal) : 8;
-    onFormChange({ target: { name: 'hours', value: hours.toFixed(2) } } as any);
-  };
-
-  // When the user changes the shift manually.
-  const handleShiftChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newShift = e.target.value as 'morning' | 'evening' | 'night';
-    setShift(newShift);
-    // Optionally reset times/hours when the shift changes.
-    onFormChange({ target: { name: 'startTime', value: '' } } as any);
-    onFormChange({ target: { name: 'endTime', value: '' } } as any);
-    onFormChange({ target: { name: 'hours', value: '8' } } as any);
-  };
-
-  const [timeValue, setTimeValue] = useState(new Date());
-  
-  // Automatically refresh computed hours whenever startTime or endTime change.
+  // On mount, if no sign‑in time is provided, set it to the default based on current time.
   useEffect(() => {
-    if (formData.startTime && formData.endTime) {
-      const sVal = formData.startTime.trim() !== '' ? formData.startTime : defaultStartTimes[shift];
-      const hours = computeHoursFromTimes(sVal, formData.endTime);
+    if (!formData.startTime || formData.startTime.trim() === "") {
+      const defaultStart = getDefaultStartTime();
+      onFormChange({ target: { name: 'startTime', value: defaultStart } } as any);
+    }
+  }, [formData.startTime, onFormChange]);
+
+  // Auto-set sign-out time if sign-in time is set and sign-out is empty.
+  useEffect(() => {
+    if (formData.startTime && (!formData.endTime || formData.endTime.trim() === "")) {
+      const autoEnd = addHours(formData.startTime, 8);
+      onFormChange({ target: { name: 'endTime', value: autoEnd } } as any);
+      const hours = computeHoursFromTimes(formData.startTime, autoEnd);
       onFormChange({ target: { name: 'hours', value: hours.toFixed(2) } } as any);
     }
-  }, [formData.startTime, formData.endTime, shift, onFormChange]);
+  }, [formData.startTime, formData.endTime, onFormChange]);
+
+  // When sign-in time changes, update the sign-in time and auto-set sign-out time to 8 hours later.
+  const handleStartTime = (newVal: string) => {
+    onFormChange({ target: { name: 'startTime', value: newVal } } as any);
+    const autoEnd = addHours(newVal, 8);
+    onFormChange({ target: { name: 'endTime', value: autoEnd } } as any);
+    const hours = computeHoursFromTimes(newVal, autoEnd);
+    onFormChange({ target: { name: 'hours', value: hours.toFixed(2) } } as any);
+  };
+
+  // When sign-out time changes, update the sign-out time and recalc hours.
+  const handleEndTime = (newVal: string) => {
+    onFormChange({ target: { name: 'endTime', value: newVal } } as any);
+    if (formData.startTime) {
+      const hours = computeHoursFromTimes(formData.startTime, newVal);
+      onFormChange({ target: { name: 'hours', value: hours.toFixed(2) } } as any);
+    }
+  };
+
+  // Local form submission handler that includes the Easter egg.
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const { performance, hours, overtime, freeDay } = formData;
+    const parsedPerformance = parseFloat(performance);
+    const parsedHours = parseFloat(hours);
+    
+    // Easter egg: if performance is approximately 5.02, show the secret message.
+    if (Math.abs(parsedPerformance - 5.02) < 0.001) {
+      alert("Miro on botti");
+    }
+    
+    if (isNaN(parsedPerformance)) {
+      alert("Lisää suorite esim. 7.25");
+      return;
+    }
+    if (isNaN(parsedHours) || parsedHours < 1 || parsedHours > 16) {
+      alert("Työaika voi olla enintään 16 tuntia.");
+      return;
+    }
+    
+    // If all validations pass, call the parent's onSubmit.
+    onSubmit(e);
+  };
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50" lang="fi-FI">
       <div className="bg-white p-6 rounded text-black shadow-lg w-80">
         <h3 className="text-xl font-bold mb-4">Lisää suorite</h3>
-        <form onSubmit={onSubmit}>
-          {/* SHIFT SELECTION */}
-          <div className="mb-4">
-            <p className="font-semibold mb-2">Valitse vuoro:</p>
-            <label className="mr-4">
-              <input
-                type="radio"
-                name="shift"
-                value="morning"
-                checked={shift === 'morning'}
-                onChange={handleShiftChange}
-              />
-              Aamuvuoro
-            </label>
-            <label className="mr-4">
-              <input
-                type="radio"
-                name="shift"
-                value="evening"
-                checked={shift === 'evening'}
-                onChange={handleShiftChange}
-              />
-              Iltavuoro
-            </label>
-            <label className="mr-4">
-              <input
-                type="radio"
-                name="shift"
-                value="night"
-                checked={shift === 'night'}
-                onChange={handleShiftChange}
-              />
-              Yövuoro
-            </label>
-          </div>
-
-          {/* SHIFT-BASED SIGN-IN TIME PICKER */}
+        <form onSubmit={handleSubmit}>
+          {/* SIGN-IN TIME */}
           <div className="mb-4">
             <p className="font-semibold mb-2">Kirjautumisaika:</p>
-            {shift === 'night' ? (
-              <NightShiftPicker
-                onChangeStartTime={handleStartTime}
-                onChangeEndTime={() => {}}
-              />
-            ) : shift === 'morning' ? (
-              <MorningShiftPicker
-                onChangeStartTime={handleStartTime}
-                onChangeEndTime={() => {}}
-              />
-            ) : shift === 'evening' ? (
-              <EveningShiftPicker
-                onChangeStartTime={handleStartTime}
-                onChangeEndTime={() => {}}
-              />
-            ) : null}
+            <input
+              type="time"
+              value={formData.startTime || ''}
+              onChange={(e) => handleStartTime(e.target.value)}
+              className="w-full border border-gray-300 rounded-md p-2 text-lg focus:ring-2 focus:ring-secondary focus:outline-none"
+              aria-label="Kirjautumisaika"
+              step="60"
+            />
           </div>
 
-          {/* FREE SIGN-OUT TIME using react-time-picker in 24h format */}
+          {/* SIGN-OUT TIME */}
           <div className="mb-4">
             <p className="font-semibold mb-2">Kirjaudu ulos:</p>
             <input
               type="time"
               value={formData.endTime || ''}
               onChange={(e) => handleEndTime(e.target.value)}
-              className="border border-gray-300 rounded-md p-2 text-lg focus:ring-2 focus:ring-secondary focus:outline-none"
+              className="w-full border border-gray-300 rounded-md p-2 text-lg focus:ring-2 focus:ring-secondary focus:outline-none"
               aria-label="Kirjaudu ulos"
-              step={60}
+              step="60"
             />
             <p className="text-xs text-black">
               Lisää aika, jolloin oman vuoron yli menevä työaika päättyy.
@@ -198,7 +189,7 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   e.preventDefault();
-                  onSubmit(e);
+                  handleSubmit(e);
                 }
               }}
               className="mt-1 block w-full border border-black rounded-md"
@@ -250,7 +241,7 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="mr-2 px-4 py-2 bg-gray text-black rounded"
+              className="mr-2 px-4 py-2 bg-gray-300 text-black rounded"
             >
               Peruuta
             </button>
