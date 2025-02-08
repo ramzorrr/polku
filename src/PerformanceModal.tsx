@@ -107,7 +107,7 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50" lang="fi-FI">
-      <div className="bg-white p-6 rounded shadow-lg w-80">
+      <div className="bg-white p-6 rounded text-black shadow-lg w-80">
         <h3 className="text-xl font-bold mb-4">Lisää suorite</h3>
         <form onSubmit={onSubmit}>
           {/* SHIFT SELECTION */}
@@ -176,14 +176,14 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
               format="HH:mm"
               clearIcon={null}
             />
-            <p className="text-xs text-gray-600">
+            <p className="text-xs text-black">
               Lisää aika, jolloin oman vuoron yli menevä työaika päättyy.
             </p>
           </div>
 
           {/* PERFORMANCE */}
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700">Suorite:</label>
+            <label className="block text-sm font-medium text-black">Suorite:</label>
             <input
               ref={performanceInputRef}
               type="number"
@@ -196,7 +196,7 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
                   onSubmit(e);
                 }
               }}
-              className="mt-1 block w-full border border-gray-300 rounded-md"
+              className="mt-1 block w-full border border-black rounded-md"
               step="1"
               required
             />
@@ -204,13 +204,13 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
 
           {/* HOURS */}
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700">Työtunnit:</label>
+            <label className="block text-sm font-medium text-black">Työtunnit:</label>
             <input
               type="number"
               name="hours"
               value={formData.hours}
               onChange={onFormChange}
-              className="mt-1 block w-full border border-gray-300 rounded-md"
+              className="mt-1 block w-full border border-black rounded-md"
               step="any"
               min="0"
               max="24"
@@ -220,7 +220,7 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
 
           {/* OVERTIME & FREE DAY */}
           <div className="mb-4 flex items-center">
-            <label className="block text-sm font-medium text-gray-700 mr-2">Ylityö:</label>
+            <label className="block text-sm font-medium text-black mr-2">Ylityö:</label>
             <input
               type="checkbox"
               name="overtime"
@@ -230,7 +230,7 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
             />
           </div>
           <div className="mb-4 flex items-center">
-            <label className="block text-sm font-medium text-gray-700 mr-2">Ylityö vapaapäivänä:</label>
+            <label className="block text-sm font-medium text-black mr-2">Ylityö vapaapäivänä:</label>
             <input
               type="checkbox"
               name="freeDay"
@@ -245,7 +245,7 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="mr-2 px-4 py-2 bg-gray-300 text-gray-700 rounded"
+              className="mr-2 px-4 py-2 bg-gray text-black rounded"
             >
               Peruuta
             </button>

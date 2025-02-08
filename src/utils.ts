@@ -26,6 +26,11 @@ export const effectiveHours = (
   overtime: boolean,
   freeDay: boolean
 ): number => {
+  // If working less than 4 hours, no deduction is applied.
+  if (hours < 4) {
+    return hours;
+  }
+  
   if (freeDay) {
     // Overtime on a free day: always multiply the total hours by 0.967.
     return hours * 0.967;

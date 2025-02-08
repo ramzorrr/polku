@@ -99,11 +99,11 @@ const App = () => {
     const parsedPerformance = parseFloat(performance);
     const parsedHours = parseFloat(hours);
     if (isNaN(parsedPerformance)) {
-      alert("Please enter a valid number for performance.");
+      alert("Lisää suorite esim. 7.25");
       return;
     }
-    if (isNaN(parsedHours) || parsedHours < 4 || parsedHours > 16) {
-      alert("Please enter a valid number for hours (4-16).");
+    if (isNaN(parsedHours) || parsedHours < 0 || parsedHours > 16) {
+      alert("Lisää aika väliltä 0-16");
       return;
     }
     const dateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
