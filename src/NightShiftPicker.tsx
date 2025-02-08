@@ -67,7 +67,7 @@ function NightShiftPicker({ onChangeStartTime, onChangeEndTime }: NightShiftPick
 
   return (
     <div className="p-2 border rounded">
-      <p className="font-bold">Aamuvuoro – Sisään</p>
+      <p className="font-bold">Yövuoro – Sisään</p>
       <div className="mt-2">
         <div className="flex space-x-2">
           <select value={startHour} onChange={handleStartHourChange} className="border px-2 rounded">

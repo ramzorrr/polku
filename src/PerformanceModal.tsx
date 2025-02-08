@@ -147,7 +147,7 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
 
           {/* SHIFT-BASED SIGN-IN TIME PICKER */}
           <div className="mb-4">
-            <p className="font-semibold mb-2">Kirjautumisaika (sign in):</p>
+            <p className="font-semibold mb-2">Kirjautumisaika:</p>
             {shift === 'night' ? (
               <NightShiftPicker
                 onChangeStartTime={handleStartTime}
@@ -168,7 +168,7 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
 
           {/* FREE SIGN-OUT TIME using react-time-picker in 24h format */}
           <div className="mb-4">
-            <p className="font-semibold mb-2">Kirjaudu ulos (sign out):</p>
+            <p className="font-semibold mb-2">Kirjaudu ulos:</p>
             <TimePicker
               onChange={(val) => handleEndTime(val || '')}
               value={formData.endTime || ''}
