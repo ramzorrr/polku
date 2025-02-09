@@ -192,7 +192,7 @@ const App = () => {
               const entry = data[dateString];
               const percentage = computePerformancePercentage(entry);
               return (
-                <div style={{ color: 'red', fontSize: '12px' }}>
+                <div style={{ color: 'black', fontSize: '12px' }}>
                   {percentage}%
                 </div>
               );
