@@ -1,9 +1,3 @@
-
-import DailyPerformance from './DailyPerformance';
-import DirectToGoal from './DirectToGoal';
-import RemainingWorkdays from './RemainingWorkdays';
-import { DateData, effectiveHours, computePerformancePercentage, calculateAverage, calculatePercentage } from './utils';
-
 import React, { useState, useEffect } from 'react';
 import Calendar, { CalendarProps } from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
@@ -12,8 +6,7 @@ import './customCalendar.css';
 import Tavoite from './Tavoite';
 import Multiplier from './Multiplier';
 import PerformanceModal from './PerformanceModal';
-import 'react-time-picker/dist/TimePicker.css';
-import 'react-clock/dist/Clock.css';
+import { DateData, computePerformancePercentage, calculateAverage, calculatePercentage } from './utils';
 
 const App = () => {
   // Data maps date strings to DateData objects.
@@ -22,7 +15,7 @@ const App = () => {
   const [period, setPeriod] = useState('');
   const [showModal, setShowModal] = useState(false);
 
-  // Auto-detected shift stored here:
+  // Auto-detected shift stored here.
   const [autoShift, setAutoShift] = useState<'morning' | 'evening' | 'night'>('morning');
 
   // Form state for the modal.
@@ -35,7 +28,7 @@ const App = () => {
     endTime: '',
   });
 
-  // Helper function to detect ongoing shift based on current local time.
+  // Helper to detect ongoing shift based on current local time.
   function getOngoingShift(): 'morning' | 'evening' | 'night' {
     const now = new Date();
     const hr = now.getHours();
@@ -146,7 +139,7 @@ const App = () => {
     return period === 'Jakso 1' ? day >= 1 && day <= 15 : day >= 16;
   };
 
-  // Use the imported calculateAverage and calculatePercentage functions.
+  // Use imported functions to calculate average performance.
   const average = parseFloat(calculateAverage(data, filterDates));
   const averagePercentage = calculatePercentage(average);
 
@@ -156,7 +149,8 @@ const App = () => {
 
   return (
     <div className="bg-primary min-h-screen text-gray-100 flex flex-col items-center p-4">
-      <h2 className="text-2xl font-pmedium text-secondary mb-4">"Paljoläjäs?!"</h2>
+      {/* You can add a Navbar here if desired */}
+      <h2 className="text-2xl font-pmedium text-secondary mb-4">Suoritelaskuri</h2>
       <div className="mb-4">
         <label className="mr-4">
           <input
@@ -231,7 +225,6 @@ const App = () => {
           </p>
         </div>
       )}
-
 
       <Tavoite data={data} period={period} />
 
