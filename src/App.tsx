@@ -5,6 +5,7 @@ import './tailwind.css';
 import './customCalendar.css';
 import Tavoite from './Tavoite';
 import Multiplier from './Multiplier';
+import MeatCalculator from './MeatCalculator';
 import PerformanceModal from './PerformanceModal';
 import { DateData, computePerformancePercentage, calculateAverage, calculatePercentage } from './utils';
 
@@ -149,8 +150,10 @@ const App = () => {
 
   return (
     <div className="bg-primary min-h-screen text-gray-100 flex flex-col items-center p-4">
-      {/* You can add a Navbar here if desired */}
       <h2 className="text-2xl font-pmedium text-secondary mb-4">Suoritelaskuri</h2>
+      <div className="bg-primary p-4 rounded-lg shadow-lg calendar-container">
+      </div>
+      <div className="bg-primary p-4 rounded-lg shadow-lg calendar-container">
       <div className="mb-4">
         <label className="mr-4">
           <input
@@ -171,10 +174,8 @@ const App = () => {
             onChange={() => setPeriod('Jakso 2')}
           />
           Jakso 2
-          <Multiplier />
         </label>
       </div>
-      <div className="bg-primary p-4 rounded-lg shadow-lg calendar-container">
         <Calendar
           onChange={onChange}
           value={date}
