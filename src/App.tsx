@@ -215,7 +215,7 @@ const App = () => {
             Suorite: {selectedDateData.performance} ({selectedDatePercentage}%)
           </p>
           <p>
-            Työtunnit: {selectedDateData.hours} (
+            Työpäivän pituus: {selectedDateData.hours} (
             {selectedDateData.freeDay
               ? 'ylityö vapaapäivänä'
               : selectedDateData.overtime
