@@ -47,7 +47,7 @@ export const effectiveHours = (
     } else {
       // Overtime on a regular day:
       if (hours <= 8) {
-        return hours - 0.75;
+        return hours * 0.967;
       } else {
         const extra = hours - 8;
         return 7.25 + (extra * 0.967);

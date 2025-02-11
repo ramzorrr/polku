@@ -91,9 +91,8 @@ const faqCategories: FAQCategory[] = [
             <p>ALHA:n avulla selvitetään, kuinka monta rullakkoa on menossa kuljetukseen.</p>
             <p><strong>Nyrkkisäännöt:</strong></p>
             <ul>
-              <li>Koodia 9031 ei käytetä terminaalin kohdalla, sillä se on Keskon pakastevaraston terminaalitunnus (rullakko lähetettäisiin pakastevarastolle).</li>
-              <li>Koodia 9231 ei käytetä noudossa – näissä tapauksissa ALHA:a ei tehdä.</li>
-              <li>Ainoa poikkeus, jossa ALHA:a ei tehdä, koskee rullakoita, jotka menevät KV1:lle. (2. ovi)</li>
+              <li>Koodia 9031 ei käytetä terminaalin kohdalla, sillä se on Keskon pakastevaraston oma terminaalitunnus.</li>
+              <li>Ainoa poikkeus, jossa ALHA:a ei tehdä on noutoasiakkailla 9132 9032 </li>
             </ul>
           </>
         )
