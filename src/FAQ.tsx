@@ -120,7 +120,7 @@ const FAQ: React.FC = () => {
 
   return (
     <div className="bg-primary min-h-screen text-black flex flex-col items-center p-4">
-      <h1 className="text-3xl font-bold text-[#FF9C01] mb-6 text-center">
+      <h1 className="text-2xl font-bold text-secondary mb-6 text-center">
         Usein Kysytyt Kysymykset (FAQ)
       </h1>
       <div className="w-full max-w-3xl space-y-6">
