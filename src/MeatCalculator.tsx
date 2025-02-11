@@ -76,7 +76,7 @@ const MeatCalculator: React.FC = () => {
 
   return (
     <div className="bg-primary min-h-screen text-gray-100 flex flex-col items-center p-4">
-      <h3 className="text-lg font-bold mb-2">Lihalaskuri</h3>
+      <h3 className="text-secondary text-2xl font-bold mb-2">Lihalaskuri</h3>
       <div className="flex flex-col space-y-2">
         <div className="flex space-x-2">
           <input

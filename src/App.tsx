@@ -150,7 +150,7 @@ const App = () => {
 
   return (
     <div className="bg-primary min-h-screen text-gray-100 flex flex-col items-center p-4">
-      <h2 className="text-2xl font-pmedium text-secondary mb-4">Suoritelaskuri</h2>
+      <h2 className="text-secondary text-2xl font-bold mb-2 font-bold mb-2">Suoritelaskuri</h2>
       <div className="bg-primary p-4 rounded-lg shadow-lg calendar-container">
       </div>
       <div className="bg-primary p-4 rounded-lg shadow-lg calendar-container">
