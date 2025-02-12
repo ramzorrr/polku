@@ -1,4 +1,7 @@
+// PerformanceModal.tsx
 import React, { useState, useEffect, useRef } from 'react';
+import TimePicker from 'react-time-picker';
+import 'react-clock/dist/Clock.css';
 
 interface PerformanceModalProps {
   formData: {
@@ -48,18 +51,18 @@ function addHours(time: string, hoursToAdd: number): string {
 
 /**
  * Determines a default sign‑in time based on the current local time.
- * Example boundaries:
- *   - If current time is between 05:45 and 14:15, default is "05:45" (morning)
- *   - If current time is between 13:45 and 22:15, default is "13:45" (evening)
- *   - Otherwise, default is "21:45" (night)
+ * For example:
+ *  - If current time is between 05:45 and 14:15, default is "05:45"
+ *  - If between 13:45 and 22:15, default is "13:45"
+ *  - Otherwise, default is "21:45"
  */
 function getDefaultStartTime(): string {
   const now = new Date();
   const totalMins = now.getHours() * 60 + now.getMinutes();
-  const morningStart = 5 * 60 + 45;  
-  const morningEnd = 14 * 60 + 15; 
-  const eveningStart = 13 * 60 + 45; 
-  const eveningEnd = 22 * 60 + 15; 
+  const morningStart = 5 * 60 + 45;
+  const morningEnd = 14 * 60 + 15;
+  const eveningStart = 13 * 60 + 45;
+  const eveningEnd = 22 * 60 + 15;
   if (totalMins >= morningStart && totalMins < morningEnd) {
     return "05:45";
   } else if (totalMins >= eveningStart && totalMins < eveningEnd) {
@@ -68,6 +71,10 @@ function getDefaultStartTime(): string {
     return "21:45";
   }
 }
+
+// Import the effectiveHours helper from utils.
+// (This function computes the effective working hours based on hours, overtime and freeDay.)
+import { effectiveHours } from './utils';
 
 const PerformanceModal: React.FC<PerformanceModalProps> = ({
   formData,
@@ -118,36 +125,23 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
     }
   };
 
-  // Local form submission handler that includes the Easter egg.
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const { performance, hours, overtime, freeDay } = formData;
-    const parsedPerformance = parseFloat(performance);
-    const parsedHours = parseFloat(hours);
-    
-    // Easter egg: if performance is approximately 5.02, show the secret message.
-    if (Math.abs(parsedPerformance - 5.02) < 0.001) {
-      alert("Miro on botti");
-    }
-    
-    if (isNaN(parsedPerformance)) {
-      alert("Lisää suorite esim. 7.25");
-      return;
-    }
-    if (isNaN(parsedHours) || parsedHours < 1 || parsedHours > 16) {
-      alert("Työaika voi olla enintään 16 tuntia.");
-      return;
-    }
-    
-    // If all validations pass, call the parent's onSubmit.
-    onSubmit(e);
-  };
+  // --- Dynamic Performance Calculation ---
+  // Parse the current hours and performance from formData.
+  const hoursNumber = parseFloat(formData.hours) || 0;
+  const perfValue = parseFloat(formData.performance) || 0;
+  // Compute effective hours using the imported helper.
+  const effective = effectiveHours(hoursNumber, formData.overtime, formData.freeDay);
+  // Calculate the current performance percentage.
+  const currentPercentage = effective > 0 ? (perfValue / effective) * 100 : 0;
+  // Calculate how much additional performance is needed to reach 100%.
+  const additionalRequired = effective - perfValue;
+  // --- End Dynamic Performance Calculation ---
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50" lang="fi-FI">
       <div className="bg-white p-6 rounded text-black shadow-lg w-80">
         <h3 className="text-xl font-bold mb-4">Lisää suorite</h3>
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={onSubmit}>
           {/* SIGN-IN TIME */}
           <div className="mb-4">
             <p className="font-semibold mb-2">Kirjautumisaika:</p>
@@ -189,13 +183,18 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   e.preventDefault();
-                  handleSubmit(e);
+                  onSubmit(e);
                 }
               }}
               className="mt-1 block w-full border border-black rounded-md"
               step="1"
               required
             />
+            {formData.performance && (
+              <p className="text-sm text-gray-600 mt-1">
+                Tämänhetkinen suorite: {currentPercentage.toFixed(1)}%. Tarvitaan vielä {additionalRequired.toFixed(2)} lisää saavuttaaksesi 100%.
+              </p>
+            )}
           </div>
 
           {/* HOURS */}
@@ -221,7 +220,9 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
               type="checkbox"
               name="overtime"
               checked={formData.overtime}
-              onChange={onFormChange}
+              onChange={(e) =>
+                onFormChange({ target: { name: 'overtime', value: e.target.checked } } as any)
+              }
               className="h-4 w-4"
             />
           </div>
@@ -231,7 +232,9 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
               type="checkbox"
               name="freeDay"
               checked={formData.freeDay}
-              onChange={onFormChange}
+              onChange={(e) =>
+                onFormChange({ target: { name: 'freeDay', value: e.target.checked } } as any)
+              }
               className="h-4 w-4"
             />
           </div>
