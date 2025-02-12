@@ -32,20 +32,21 @@ export const effectiveHours = (
   }
   
   if (freeDay) {
-    // Overtime on a free day: always multiply the total hours by 0.967.
+    // Free day: apply the multiplier as before.
     return hours * 0.967;
   } else {
-    // Normal or overtime on a regular day.
     if (!overtime) {
-      // Normal day:
+      // Normal day (no overtime)
       if (hours <= 8) {
         return hours - 0.75;
       } else {
         const extra = hours - 8;
-        return 7.25 + (extra - 0.75);
+        // For hours > 8, the effective hours are: 
+        // 7.25 for the first 8 hours plus the extra hours with no further deduction.
+        return 7.25 + extra;
       }
     } else {
-      // Overtime on a regular day:
+      // Overtime day:
       if (hours <= 8) {
         return hours * 0.967;
       } else {
