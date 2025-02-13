@@ -187,16 +187,9 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
               step="1"
               required
             />
-            {formData.performance ? (
-              <p className="text-sm text-gray-600 mt-1">
-                {currentPercentage.toFixed(1)}%. Tarvitset{" "}
-                {additionalRequired.toFixed(2)} lisää saavuttaaksesi 100%.
-              </p>
-            ) : (
-              <p className="text-sm text-gray-600 mt-1">
-                Lisää luku nähdäksesi, mitä tarvitaan 100% saavuttamiseksi.
-              </p>
-            )}
+            <p className="text-sm text-gray-600 mt-1">
+              {currentPercentage.toFixed(1)}%. Tarvitset {additionalRequired.toFixed(2)} lisää saavuttaaksesi 100%.
+            </p>
           </div>
 
           {/* HOURS */}
@@ -259,5 +252,6 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
     </div>
   );
 };
+
 
 export default PerformanceModal;

@@ -7,55 +7,36 @@ export interface DateData {
   freeDay: boolean;
 }
 
-/**
- * Calculates effective working hours.
- *
- * Modes:
- * - Normal (freeDay === false, overtime === false):
- *    - For hours ≤ 8: effective = hours - 0.75
- *    - For hours > 8: effective = 7.25 (base for 8 hours) + (extra hours - 0.75)
- * - Overtime on a regular day (freeDay === false, overtime === true):
- *    - For hours ≤ 8: effective = hours - 0.75
- *    - For hours > 8: effective = 7.25 (base) + (extra hours * 0.967)
- * - Overtime on a free day (freeDay === true):
- *    - For hours ≤ 8: effective = hours - 0.25
- *    - For hours > 8: effective = (8 - 0.25) + (extra hours × 0.967)
- */
+
 export const effectiveHours = (
   hours: number,
   overtime: boolean,
   freeDay: boolean
 ): number => {
-  // If working less than 4 hours, no deduction is applied.
-  if (hours < 4) {
-    return hours;
-  }
-  
   if (freeDay) {
-    // Free day: apply the multiplier as before.
+    // ✅ Overtime on a Free Day → All hours multiplied by 0.967
     return hours * 0.967;
-  } else {
-    if (!overtime) {
-      // Normal day (no overtime)
-      if (hours <= 8) {
-        return hours - 0.75;
-      } else {
-        const extra = hours - 8;
-        // For hours > 8, the effective hours are: 
-        // 7.25 for the first 8 hours plus the extra hours with no further deduction.
-        return 7.25 + extra;
-      }
+  } else if (overtime) {
+    // Overtime on a Regular Day:
+    if (hours <= 8) {
+      return hours * 0.967;
     } else {
-      // Overtime day:
-      if (hours <= 8) {
-        return hours * 0.967;
-      } else {
-        const extra = hours - 8;
-        return 7.25 + (extra * 0.967);
-      }
+      const extra = hours - 8;
+      return 7.25 + (extra * 0.967);
     }
+  } else {
+    // ✅ Normal Day (No Overtime, No Free Day)
+    if (hours >= 4) {
+      return hours - 0.75; // Deduct 0.75 only if hours > 4
+    } else if (hours > 8) {
+      const extra = hours - 8;
+      return 7.25 + (extra * 0.967); // Base 7.25 + overtime multiplier for extra hours
+    }
+    return hours; // No deduction for hours ≤ 4
   }
 };
+
+
 
 /**
  * Computes performance percentage given an entry.
@@ -95,3 +76,4 @@ export const calculatePercentage = (value: number): number => {
   const percentage = ((value - 7.25) / (10.88 - 7.25)) * 50 + 100;
   return Math.round(percentage);
 };
+
