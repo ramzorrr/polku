@@ -1,15 +1,15 @@
-// Navbar.tsx
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-
 const Navbar: React.FC = () => {
   return (
-    <nav className="p-4 bg-gray-800 text-white">
-      <Link to="/" className="mr-4">Suoritelaskuri</Link>
-      <Link to="/pohjalaskuri" className="text-white mr-4">Pohjalaskuri</Link>
-      <Link to="/lihalaskuri" className="text-white mr-4">Lihalaskuri</Link>
-      <Link to="/faq" className="text-white mr-4" >UKK</Link>
+    <nav className="sticky top-0 z-50 p-4 bg-gray-900 shadow-md flex justify-between items-center text-[#FF9C01]">
+      <div className="space-x-6">
+        <Link to="/" className="hover:text-yellow-400 transition duration-200">Etusivu</Link>
+        <Link to="/pohjalaskuri" className="hover:text-yellow-400 transition duration-200">Pohjalaskuri</Link>
+        <Link to="/lihalaskuri" className="hover:text-yellow-400 transition duration-200">Lihalaskuri</Link>
+        <Link to="/faq" className="hover:text-yellow-400 transition duration-200">UKK</Link>
+      </div>
     </nav>
   );
 };
