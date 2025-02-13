@@ -195,11 +195,11 @@ const Tavoite = ({
       {/* Remaining Data Display */}
       {savedGoal !== null && remainingData && (
         <div className="mt-4 grid grid-cols-1 gap-4">
-          <div className="p-4 bg-pink-500 text-white rounded shadow-lg">
-            <h3 className="text-lg font-bold">Jakson keskisuorite</h3>
-            <p>{remainingData.currentAveragePercentage}%</p>
-            <h3 className="text-lg font-bold">Maksetut työtunnit</h3>
-            <p>{remainingData.totalInputHours} h</p>
+          <div className="p-6 bg-gradient-to-r from-pink-600 to-pink-400 text-white rounded-lg shadow-md hover:shadow-xl transform hover:scale-105 transition duration-300">
+            <h3 className="text-xl font-semibold mb-2">Jakson keskisuorite</h3>
+            <p className="text-2xl font-bold">{remainingData.currentAveragePercentage}%</p>
+            <h3 className="text-xl font-semibold mt-4">Maksetut työtunnit</h3>
+            <p className="text-2xl font-bold">{remainingData.totalInputHours} h</p>
           </div>
           <DailyPerformance
             value={remainingData.dailyRequiredAbsolute}

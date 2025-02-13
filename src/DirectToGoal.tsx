@@ -9,14 +9,12 @@ interface DirectToGoalProps {
 const DirectToGoal: React.FC<DirectToGoalProps> = ({
   value,
   percentage,
-  label = "Suoraan tavoitteeseen", // default value if none provided
+  label = "Suoraan tavoitteeseen",
 }) => {
   return (
-    <div className="p-4 bg-green-500 text-white rounded shadow-lg">
-      <h3 className="text-lg font-bold">{label}</h3>
-      <p>
-        {value} ({percentage}%)
-      </p>
+    <div className="p-6 bg-gradient-to-r from-green-600 to-green-400 text-white rounded-lg shadow-md hover:shadow-xl transform hover:scale-105 transition duration-300">
+      <h3 className="text-xl font-semibold mb-2">{label}</h3>
+      <p className="text-2xl font-bold">{value} <span className="text-lg">({percentage}%)</span></p>
     </div>
   );
 };

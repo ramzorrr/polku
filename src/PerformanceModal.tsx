@@ -138,8 +138,8 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
   // --- End Dynamic Performance Calculation ---
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50" lang="fi-FI">
-      <div className="bg-white p-6 rounded text-black shadow-lg w-80">
+    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm z-50 transition-opacity duration-300">
+      <div className="bg-white p-6 rounded text-black shadow-lg w-80 transform transition-all duration-300">
         <h3 className="text-xl font-bold mb-4">Lisää suorite</h3>
         <form onSubmit={onSubmit}>
           {/* SIGN-IN TIME */}
