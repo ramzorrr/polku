@@ -7,35 +7,47 @@ export interface DateData {
   freeDay: boolean;
 }
 
-
+/**
+ * Calculates effective working hours.
+ *
+ * Modes:
+ * - Normal (freeDay === false, overtime === false):
+ *    - For hours ≤ 8: effective = hours - 0.75
+ *    - For hours > 8: effective = 7.25 (base for 8 hours) + (extra hours - 0.75)
+ * - Overtime on a regular day (freeDay === false, overtime === true):
+ *    - For hours ≤ 8: effective = hours - 0.75
+ *    - For hours > 8: effective = 7.25 (base) + (extra hours * 0.967)
+ * - Overtime on a free day (freeDay === true):
+ *    - For hours ≤ 8: effective = hours - 0.25
+ *    - For hours > 8: effective = (8 - 0.25) + (extra hours × 0.967)
+ */
 export const effectiveHours = (
   hours: number,
   overtime: boolean,
   freeDay: boolean
 ): number => {
   if (freeDay) {
-    // ✅ Overtime on a Free Day → All hours multiplied by 0.967
+    // Free day: use raw hours multiplied by 0.967.
     return hours * 0.967;
   } else if (overtime) {
-    // Overtime on a Regular Day:
-    if (hours <= 8) {
-      return hours * 0.967;
-    } else {
-      const extra = hours - 8;
-      return 7.25 + (extra * 0.967);
-    }
+    // Overtime day: enforce minimum 8 and maximum 16 hours.
+    const clampedHours = Math.max(8, Math.min(hours, 16));
+    // Effective = first 8 hours count as 7.25, plus extra hours multiplied by 0.967.
+    return 7.25 + (clampedHours - 8) * 0.967;
   } else {
-    // ✅ Normal Day (No Overtime, No Free Day)
-    if (hours >= 4) {
-      return hours - 0.75; // Deduct 0.75 only if hours > 4
-    } else if (hours > 8) {
-      const extra = hours - 8;
-      return 7.25 + (extra * 0.967); // Base 7.25 + overtime multiplier for extra hours
+    // Normal day (overtime not ticked):
+    if (hours < 4) {
+      // No deduction for very short shifts.
+      return hours;
+    } else if (hours <= 8) {
+      // Deduct 0.75 for shifts between 4 and 8 hours.
+      return hours - 0.75;
+    } else {
+      // For shifts over 8 hours, effective hours = 7.25 (for first 8) + extra hours × 0.967.
+      return 7.25 + (hours - 8) * 0.967;
     }
-    return hours; // No deduction for hours ≤ 4
   }
 };
-
 
 
 /**
@@ -76,4 +88,3 @@ export const calculatePercentage = (value: number): number => {
   const percentage = ((value - 7.25) / (10.88 - 7.25)) * 50 + 100;
   return Math.round(percentage);
 };
-
