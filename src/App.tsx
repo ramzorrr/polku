@@ -1,3 +1,4 @@
+import { DateData, computePerformancePercentage, calculateAverage, calculatePercentage } from './utils';
 import React, { useState, useEffect } from 'react';
 import Calendar, { CalendarProps } from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
@@ -7,7 +8,6 @@ import Tavoite from './Tavoite';
 import Multiplier from './Multiplier';
 import MeatCalculator from './MeatCalculator';
 import PerformanceModal from './PerformanceModal';
-import { DateData, computePerformancePercentage, calculateAverage, calculatePercentage } from './utils';
 
 const App = () => {
   // Data maps date strings to DateData objects.
@@ -54,8 +54,8 @@ const App = () => {
   };
 
   useEffect(() => {
-    // Set period based on current day.
-    const currentDay = new Date().getDate();
+    // Set period based on the currently selected date.
+    const currentDay = date.getDate();
     setPeriod(currentDay >= 1 && currentDay <= 15 ? 'Jakso 1' : 'Jakso 2');
 
     // Load stored calendar data.
@@ -63,17 +63,23 @@ const App = () => {
     if (storedData) {
       setData(JSON.parse(storedData));
     }
-  }, []);
+  }, [date]);
 
   useEffect(() => {
     localStorage.setItem('calendarData', JSON.stringify(data));
   }, [data]);
 
   const onChange: CalendarProps['onChange'] = (value) => {
+    let newDate: Date | null = null;
     if (value instanceof Date) {
-      setDate(value);
+      newDate = value;
     } else if (Array.isArray(value) && value.length > 0 && value[0] instanceof Date) {
-      setDate(value[0]);
+      newDate = value[0];
+    }
+    if (newDate) {
+      setDate(newDate);
+      const day = newDate.getDate();
+      setPeriod(day >= 1 && day <= 15 ? 'Jakso 1' : 'Jakso 2');
     } else {
       console.log('Invalid or no date selected');
     }
@@ -135,14 +141,16 @@ const App = () => {
     return `${day}.${month}.${year}`;
   };
 
+  // In this version, we do not disable any dates.
   const filterDates = (d: Date): boolean => {
+    // This function is still used for calculating averages.
     const day = d.getDate();
     return period === 'Jakso 1' ? day >= 1 && day <= 15 : day >= 16;
   };
 
-  // Use imported functions to calculate average performance.
-  const average = parseFloat(calculateAverage(data, filterDates));
-  const averagePercentage = calculatePercentage(average);
+  // Use the imported calculateAverage and calculatePercentage functions.
+  const overallAverage = parseFloat(calculateAverage(data, filterDates));
+  const overallAveragePercentage = calculatePercentage(overallAverage);
 
   const selectedDateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
   const selectedDateData = data[selectedDateString];
@@ -150,58 +158,50 @@ const App = () => {
 
   return (
     <div className="bg-primary min-h-screen text-gray-100 flex flex-col items-center p-4">
-      <h2 className="text-secondary text-2xl font-bold mb-2 font-bold mb-2">Suoritelaskuri</h2>
+      <h2 className="text-secondary text-2xl font-bold mb-2">Suoritelaskuri</h2>
+      
+      {/* Calendar – All dates are now clickable */}
       <div className="bg-primary p-4 rounded-lg shadow-lg calendar-container">
-      </div>
-      <div className="bg-primary p-4 rounded-lg shadow-lg calendar-container">
-      <div className="mb-4">
-        <label className="mr-4">
-          <input
-            type="radio"
-            name="period"
-            value="Jakso 1"
-            checked={period === 'Jakso 1'}
-            onChange={() => setPeriod('Jakso 1')}
-          />
-          Jakso 1
-        </label>
-        <label>
-          <input
-            type="radio"
-            name="period"
-            value="Jakso 2"
-            checked={period === 'Jakso 2'}
-            onChange={() => setPeriod('Jakso 2')}
-          />
-          Jakso 2
-        </label>
-      </div>
-        <Calendar
-          onChange={onChange}
-          value={date}
-          locale="fi-FI"
-          tileDisabled={({ date, view }) => view === 'month' && !filterDates(date)}
-          tileContent={({ date, view }) => {
-            const dateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-            if (view === 'month' && data[dateString]) {
-              const entry = data[dateString];
-              const percentage = computePerformancePercentage(entry);
-              return (
-                <div style={{ color: 'black', fontSize: '12px' }}>
-                  {percentage}%
-                </div>
-              );
-            }
-            return null;
-          }}
-          tileClassName={({ date, view }) => {
-            const dateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-            return data[dateString] ? 'highlight' : '';
-          }}
-        />
+      <Calendar
+        onChange={onChange}
+        value={date}
+        locale="fi-FI"
+        // Remove tileDisabled so all dates are clickable.
+        tileContent={({ date, view }) => {
+          const dateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(
+            date.getDate()
+          ).padStart(2, '0')}`;
+          if (view === 'month' && data[dateString]) {
+            const entry = data[dateString];
+            const percentage = computePerformancePercentage(entry);
+            return (
+              <div style={{ color: 'black', fontSize: '12px' }}>
+                {percentage}%
+              </div>
+            );
+          }
+          return null;
+        }}
+        tileClassName={({ date, view }) => {
+          if (view !== 'month') return '';
+          const classes: string[] = [];
+          // If the date is in the current period, add our custom class.
+          if (filterDates(date)) {
+            classes.push('currentPeriod');
+          }
+          // Also add "highlight" if there is data.
+          const dateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(
+            date.getDate()
+          ).padStart(2, '0')}`;
+          if (data[dateString]) {
+            classes.push('highlight');
+          }
+          return classes.join(' ');
+        }}
+      />
       </div>
       <div className="flex space-x-4 mt-4">
-        <button onClick={() => handleAddSuorite()} className="bg-secondary text-white px-4 py-2 rounded">
+        <button onClick={handleAddSuorite} className="bg-secondary text-white px-4 py-2 rounded">
           Lisää suorite
         </button>
         <button onClick={handleDeleteData} className="bg-red-600 text-white px-4 py-2 rounded">
