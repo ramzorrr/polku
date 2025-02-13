@@ -1,4 +1,3 @@
-// Tavoite.tsx
 import React, { useState, useEffect } from 'react';
 import DailyPerformance from './DailyPerformance';
 import DirectToGoal from './DirectToGoal';
@@ -93,13 +92,14 @@ const Tavoite = ({
     const adjustedInputHours = (hours: number, overtime: boolean, freeDay: boolean): number => {
       if (freeDay) return hours;
       if (overtime) {
+        // Overtime day: first 8 hours count as 7.5 and extra hours are full.
         if (hours <= 8) {
           return hours === 8 ? 8 : hours;
         } else {
           return 7.5 + (hours - 8);
         }
       } else {
-        // Normal day: deduct lunch break only if hours >= 4.
+        // Normal day: if the hours are at least 7, subtract a 0.5 hour lunch break from the first 8.
         if (hours < 4) return hours;
         else if (hours <= 8) return hours - 0.5;
         else {
@@ -119,7 +119,6 @@ const Tavoite = ({
           const entry = data[dateString];
           const adjusted = adjustedInputHours(entry.hours, entry.overtime, entry.freeDay);
           totalInputHours += adjusted;
-
           const eff = effectiveHours(entry.hours, entry.overtime, entry.freeDay);
           totalEffectiveLogged += eff;
           totalPerformanceLogged += entry.performance;
@@ -128,8 +127,9 @@ const Tavoite = ({
       }
     });
 
+    // When calculating missingDays, use the later of today’s date or the period’s start day.
     let missingDays = 0;
-    for (let d = dayToday; d <= periodEndDay; d++) {
+    for (let d = Math.max(dayToday, periodStartDay); d <= periodEndDay; d++) {
       const currDate = new Date(fullYear, month, d);
       if (currDate.getDay() !== 0 && currDate.getDay() !== 6) {
         const dateStr = `${fullYear}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;

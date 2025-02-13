@@ -166,9 +166,6 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
               aria-label="Kirjaudu ulos"
               step="60"
             />
-            <p className="text-xs text-black">
-              Lisää aika, jolloin oman vuoron yli menevä työaika päättyy.
-            </p>
           </div>
 
           {/* PERFORMANCE */}
@@ -190,9 +187,14 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
               step="1"
               required
             />
-            {formData.performance && (
+            {formData.performance ? (
               <p className="text-sm text-gray-600 mt-1">
-                Tämänhetkinen suorite: {currentPercentage.toFixed(1)}%. Tarvitaan vielä {additionalRequired.toFixed(2)} lisää saavuttaaksesi 100%.
+                {currentPercentage.toFixed(1)}%. Tarvitset{" "}
+                {additionalRequired.toFixed(2)} lisää saavuttaaksesi 100%.
+              </p>
+            ) : (
+              <p className="text-sm text-gray-600 mt-1">
+                Lisää luku nähdäksesi, mitä tarvitaan 100% saavuttamiseksi.
               </p>
             )}
           </div>
