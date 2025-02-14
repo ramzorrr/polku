@@ -1,4 +1,3 @@
-// Multiplier.tsx
 import React, { useState, useEffect } from 'react';
 
 const Multiplier: React.FC = () => {
@@ -18,20 +17,22 @@ const Multiplier: React.FC = () => {
   const handleAdd = () => {
     const trimmed = inputValue.trim();
     let valueToAdd = 0;
+
     if (trimmed.startsWith('(') && trimmed.endsWith(')')) {
       // Remove the parentheses and parse the inside value.
       const inside = trimmed.substring(1, trimmed.length - 1);
-      const parsed = parseFloat(inside);
+      const parsed = parseFloat(inside.replace(',', '.'));
       if (!isNaN(parsed)) {
         valueToAdd = parsed;
       }
     } else {
-      const parsed = parseFloat(trimmed);
+      const parsed = parseFloat(trimmed.replace(',', '.'));
       if (!isNaN(parsed)) {
-        // Multiply the parsed value by 0.075
+        // Multiply the parsed value by 0.07
         valueToAdd = parsed * 0.07;
       }
     }
+    
     setTotal(prevTotal => prevTotal + valueToAdd);
     setInputValue('');
   };

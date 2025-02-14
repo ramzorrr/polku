@@ -183,7 +183,7 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
             />
             {(
               <p className="text-sm text-gray-600 mt-1">
-                {currentPercentage.toFixed(1)}%. Tarvitset {additionalRequired.toFixed(2)} lisää saavuttaaksesi 100%.
+                {currentPercentage.toFixed(1)}%. Tarvitset {additionalRequired.toFixed(2)} saavuttaaksesi 100%.
               </p>
             )}
           </div>
@@ -226,7 +226,7 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
           {/* FREE DAY Checkbox */}
           <div className="mb-4 flex items-center">
             <label className="block text-sm font-medium text-black mr-2">
-              Ylityö vapaapäivänä:
+              Ylityö:
             </label>
             <input
               type="checkbox"

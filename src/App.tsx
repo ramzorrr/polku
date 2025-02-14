@@ -218,7 +218,7 @@ const App = () => {
           <p>
             Työpäivän pituus: {selectedDateData.hours} (
             {selectedDateData.freeDay
-              ? 'ylityö vapaapäivänä'
+              ? 'ylityö'
               : selectedDateData.overtime
               ? 'ylityö'
               : 'normaali'}
