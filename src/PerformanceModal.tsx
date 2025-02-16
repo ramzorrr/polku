@@ -72,7 +72,6 @@ function getDefaultStartTime(): string {
 }
 
 // Import the effectiveHours helper from utils.
-// This function computes effective working hours based on the raw hours and flags.
 import { effectiveHours } from './utils';
 
 const PerformanceModal: React.FC<PerformanceModalProps> = ({
@@ -105,7 +104,7 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
     }
   }, [formData.startTime, formData.endTime, onFormChange]);
 
-  // When sign-in time changes, update startTime and recalc hours only if endTime exists.
+  // When sign-in time changes, update startTime and recalc hours if sign-out exists.
   const handleStartTime = (newVal: string) => {
     onFormChange({ target: { name: 'startTime', value: newVal } } as any);
     if (formData.endTime && formData.endTime.trim() !== "") {
@@ -124,7 +123,6 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
   };
 
   // --- Dynamic Performance Calculation ---
-  // Parse hours and performance from formData.
   const hoursNumber = parseFloat(formData.hours) || 0;
   const perfValue = parseFloat(formData.performance) || 0;
   const effective = effectiveHours(hoursNumber, formData.overtime, formData.freeDay);
@@ -132,11 +130,22 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
   const additionalRequired = effective - perfValue;
   // --- End Dynamic Performance Calculation ---
 
+  // Local submit handler with Easter egg.
+  const handleLocalSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const parsedPerformance = parseFloat(formData.performance);
+    // Use a tolerance of 0.01 for floating point comparison.
+    if (Math.abs(parsedPerformance - 12.217) < 0.001) {
+      alert("Miro on botti joka syö vehnäpullaa!");
+    }
+    onSubmit(e);
+  };
+
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 backdrop-blur-sm transition-opacity duration-300" lang="fi-FI">
       <div className="bg-white p-6 rounded text-black shadow-lg w-80 transform transition-all duration-300">
         <h3 className="text-xl font-bold mb-4">Lisää suorite</h3>
-        <form onSubmit={onSubmit}>
+        <form onSubmit={handleLocalSubmit}>
           {/* SIGN-IN TIME */}
           <div className="mb-4">
             <p className="font-semibold mb-2">Kirjautumisaika:</p>
@@ -160,7 +169,6 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
               aria-label="Kirjaudu ulos"
               step="60"
             />
-
           </div>
           {/* PERFORMANCE */}
           <div className="mb-4">
@@ -174,18 +182,16 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   e.preventDefault();
-                  onSubmit(e);
+                  handleLocalSubmit(e);
                 }
               }}
               className="mt-1 block w-full border border-black rounded-md"
               step="1"
               required
             />
-            {(
-              <p className="text-sm text-gray-600 mt-1">
-                {currentPercentage.toFixed(1)}%. Tarvitset {additionalRequired.toFixed(2)} saavuttaaksesi 100%.
-              </p>
-            )}
+            <p className="text-sm text-gray-600 mt-1">
+              {currentPercentage.toFixed(1)}%. Tarvitset {additionalRequired.toFixed(2)} saavuttaaksesi 100%.
+            </p>
           </div>
           {/* HOURS */}
           <div className="mb-4">
@@ -202,7 +208,6 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
               required
             />
           </div>
-          
           {/* OVERTIME Checkbox */}
           <div className="mb-4 flex items-center">
             <label className="block text-sm font-medium text-black mr-2">
@@ -214,8 +219,7 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
               checked={formData.overtime}
               onChange={(e) => {
                 const checked = e.target.checked;
-                onFormChange({ target: { name: 'overtime', value: checked } } as any);
-                // If this checkbox is ticked, ensure freeDay is false.
+                onFormChange({ target: { name: 'overtime', value: e.target.checked } } as any)
                 if (checked) {
                   onFormChange({ target: { name: 'freeDay', value: false } } as any);
                 }
