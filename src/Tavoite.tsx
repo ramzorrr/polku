@@ -9,6 +9,7 @@ import {
   calculateAverage,
   calculatePercentage,
 } from './utils';
+import localforage from 'localforage';
 
 const Tavoite = ({
   data,
@@ -30,14 +31,18 @@ const Tavoite = ({
   const defaultEffectiveFreeDay = 7.75;
   const defaultEffective = defaultEffectiveNormal;
 
-  // On mount, load saved goal from localStorage.
+  // On mount, load saved goal from localForage.
   useEffect(() => {
-    const storedGoal = localStorage.getItem('savedGoal');
-    if (storedGoal) {
-      const parsedGoal = parseFloat(storedGoal);
-      setSavedGoal(parsedGoal);
-      setGoal(parsedGoal);
-    }
+    localforage
+      .getItem('savedGoal')
+      .then((storedGoal) => {
+        if (storedGoal !== null) {
+          const parsedGoal = parseFloat(storedGoal as string);
+          setSavedGoal(parsedGoal);
+          setGoal(parsedGoal);
+        }
+      })
+      .catch((err) => console.error('Error loading savedGoal:', err));
   }, []);
 
   const handleSliderChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -45,10 +50,14 @@ const Tavoite = ({
   };
 
   const handleSaveGoal = () => {
-    localStorage.setItem('savedGoal', goal.toString());
-    setSavedGoal(goal);
-    setMessage('Tavoite tallennettu');
-    setTimeout(() => setMessage(null), 3000);
+    localforage
+      .setItem('savedGoal', goal.toString())
+      .then(() => {
+        setSavedGoal(goal);
+        setMessage('Tavoite tallennettu');
+        setTimeout(() => setMessage(null), 3000);
+      })
+      .catch((err) => console.error('Error saving savedGoal:', err));
   };
 
   // Utility functions for formatting and filtering dates.
@@ -99,12 +108,12 @@ const Tavoite = ({
           return 7.5 + (hours - 8);
         }
       } else {
-        // Normal day: if the hours are at least 7, subtract a 0.5 hour lunch break from the first 8.
+        // Normal day: if hours are at least 7, subtract 0.5 from the first 8 hours.
         if (hours < 4) return hours;
         else if (hours <= 8) return hours - 0.5;
         else {
           const extra = hours - 8;
-          // For extra hours, if extra is at least 7, subtract an additional 0.5.
+          // For extra hours, if extra >= 7, subtract an additional 0.5.
           if (extra >= 7) return 7.5 + (extra - 0.5);
           else return 7.5 + extra;
         }
@@ -119,6 +128,7 @@ const Tavoite = ({
           const entry = data[dateString];
           const adjusted = adjustedInputHours(entry.hours, entry.overtime, entry.freeDay);
           totalInputHours += adjusted;
+
           const eff = effectiveHours(entry.hours, entry.overtime, entry.freeDay);
           totalEffectiveLogged += eff;
           totalPerformanceLogged += entry.performance;
@@ -127,7 +137,7 @@ const Tavoite = ({
       }
     });
 
-    // When calculating missingDays, use the later of today’s date or the period’s start day.
+    // Calculate missing days using the later of today's date or the period's start.
     let missingDays = 0;
     for (let d = Math.max(dayToday, periodStartDay); d <= periodEndDay; d++) {
       const currDate = new Date(fullYear, month, d);
