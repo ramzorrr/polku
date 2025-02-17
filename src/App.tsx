@@ -8,6 +8,7 @@ import Tavoite from './Tavoite';
 import Multiplier from './Multiplier';
 import MeatCalculator from './MeatCalculator';
 import PerformanceModal from './PerformanceModal';
+import localforage from 'localforage';
 
 const App = () => {
   // Data maps date strings to DateData objects.
@@ -54,19 +55,20 @@ const App = () => {
   };
 
   useEffect(() => {
-    // Set period based on the currently selected date.
-    const currentDay = date.getDate();
-    setPeriod(currentDay >= 1 && currentDay <= 15 ? 'Jakso 1' : 'Jakso 2');
-
-    // Load stored calendar data.
-    const storedData = localStorage.getItem('calendarData');
-    if (storedData) {
-      setData(JSON.parse(storedData));
-    }
+    // Load stored calendar data asynchronously.
+    localforage.getItem('calendarData')
+      .then((storedData) => {
+        if (storedData) {
+          setData(storedData as { [key: string]: DateData });
+        }
+      })
+      .catch((err) => console.error('Error retrieving calendarData:', err));
   }, [date]);
-
+  
   useEffect(() => {
-    localStorage.setItem('calendarData', JSON.stringify(data));
+    // Save calendar data asynchronously whenever 'data' changes.
+    localforage.setItem('calendarData', data)
+      .catch((err) => console.error('Error saving calendarData:', err));
   }, [data]);
 
   const onChange: CalendarProps['onChange'] = (value) => {
@@ -219,7 +221,7 @@ const App = () => {
             Työpäivän pituus: {selectedDateData.hours} (
             {selectedDateData.freeDay
               ? 'ylityö'
-              : selectedDateData.overtime
+              : selectedDateData.overtime 
               ? 'ylityö'
               : 'normaali'}
             )

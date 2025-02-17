@@ -1,16 +1,26 @@
 import React, { useState, useEffect } from 'react';
+import localforage from 'localforage';
 
 const Multiplier: React.FC = () => {
-  // Initialize total from localStorage (or default to 0 if nothing is saved)
-  const [total, setTotal] = useState(() => {
-    const savedTotal = localStorage.getItem('multiplierTotal');
-    return savedTotal ? parseFloat(savedTotal) : 0;
-  });
+  // Initialize total from localForage (default to 0 if nothing is saved)
+  const [total, setTotal] = useState<number>(0);
   const [inputValue, setInputValue] = useState('');
 
-  // Update localStorage whenever total changes.
+  // On mount, load saved total from localForage.
   useEffect(() => {
-    localStorage.setItem('multiplierTotal', total.toString());
+    localforage.getItem('multiplierTotal')
+      .then((savedTotal) => {
+        if (savedTotal !== null) {
+          setTotal(parseFloat(savedTotal as string));
+        }
+      })
+      .catch((err) => console.error('Error loading multiplierTotal:', err));
+  }, []);
+
+  // Update localForage whenever total changes.
+  useEffect(() => {
+    localforage.setItem('multiplierTotal', total.toString())
+      .catch((err) => console.error('Error saving multiplierTotal:', err));
   }, [total]);
 
   // Function to add the current input value.
