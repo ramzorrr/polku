@@ -88,12 +88,6 @@ const MeatCalculator: React.FC = () => {
             placeholder="Anna lihan paino (kg)"
             className="border border-gray-300 rounded px-2 py-1"
           />
-          <button 
-            onClick={handleAddWeight} 
-            className="bg-secondary text-white px-4 py-2 rounded"
-          >
-            Lisää
-          </button>
         </div>
         <button 
           onClick={handleReset} 
