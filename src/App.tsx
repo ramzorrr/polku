@@ -47,6 +47,11 @@ const App = () => {
     return 'night';
   }
 
+  function getPeriodForDate(d: Date) {
+    const day = d.getDate();
+    return day >= 1 && day <= 15 ? 'Jakso 1' : 'Jakso 2';
+  }
+
   // When "Lisää suorite" is clicked, auto-detect the shift and show the modal.
   const handleAddSuorite = () => {
     const shiftNow = getOngoingShift();
@@ -70,6 +75,10 @@ const App = () => {
     localforage.setItem('calendarData', data)
       .catch((err) => console.error('Error saving calendarData:', err));
   }, [data]);
+
+  useEffect(() => {
+    setPeriod(getPeriodForDate(date));
+  }, [date]);
 
   const onChange: CalendarProps['onChange'] = (value) => {
     let newDate: Date | null = null;
