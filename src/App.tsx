@@ -48,9 +48,9 @@ const App = () => {
   }
 
   function getPeriodForDate(d: Date) {
-    const day = d.getDate();
-    return day >= 1 && day <= 15 ? 'Jakso 1' : 'Jakso 2';
-  }
+  const day = d.getDate();
+  return day >= 1 && day <= 15 ? 'Jakso 1' : 'Jakso 2';
+}
 
   // When "Lisää suorite" is clicked, auto-detect the shift and show the modal.
   const handleAddSuorite = () => {

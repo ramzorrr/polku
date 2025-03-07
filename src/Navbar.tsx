@@ -8,7 +8,6 @@ const Navbar: React.FC = () => {
         <Link to="/" className="hover:text-yellow-400 transition duration-200">Etusivu</Link>
         <Link to="/pohjalaskuri" className="hover:text-yellow-400 transition duration-200">Pohjalaskuri</Link>
         <Link to="/lihalaskuri" className="hover:text-yellow-400 transition duration-200">Lihalaskuri</Link>
-        <Link to="/faq" className="hover:text-yellow-400 transition duration-200">UKK</Link>
       </div>
     </nav>
   );
