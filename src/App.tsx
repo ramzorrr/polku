@@ -177,11 +177,8 @@ const App = () => {
         onChange={onChange}
         value={date}
         locale="fi-FI"
-        // Remove tileDisabled so all dates are clickable.
-        tileContent={({ date, view }) => {
-          const dateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(
-            date.getDate()
-          ).padStart(2, '0')}`;
+        tileContent={({ date: tileDate, view }) => {
+          const dateString = `${tileDate.getFullYear()}-${String(tileDate.getMonth() + 1).padStart(2, '0')}-${String(tileDate.getDate()).padStart(2, '0')}`;
           if (view === 'month' && data[dateString]) {
             const entry = data[dateString];
             const percentage = computePerformancePercentage(entry);
@@ -193,18 +190,21 @@ const App = () => {
           }
           return null;
         }}
-        tileClassName={({ date, view }) => {
+        tileClassName={({ date: tileDate, view }) => {
           if (view !== 'month') return '';
           const classes: string[] = [];
-          // If the date is in the current period, add our custom class.
-          if (filterDates(date)) {
+
+          // If the tile date matches the selected date, mark it as selected.
+          if (tileDate.toDateString() === date.toDateString()) {
+            classes.push('selected-tile');
+          } else if (filterDates(tileDate)) {
+            // Otherwise, if it's in the current period, add the current period class.
             classes.push('currentPeriod');
           }
-          // Also add "highlight" if there is data.
-          const dateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(
-            date.getDate()
-          ).padStart(2, '0')}`;
-          if (data[dateString]) {
+
+          // Also add a highlight if there is data for this tile.
+          const tileDateString = `${tileDate.getFullYear()}-${String(tileDate.getMonth() + 1).padStart(2, '0')}-${String(tileDate.getDate()).padStart(2, '0')}`;
+          if (data[tileDateString]) {
             classes.push('highlight');
           }
           return classes.join(' ');
