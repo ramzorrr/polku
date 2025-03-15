@@ -38,9 +38,9 @@ const App = () => {
     const totalMins = hr * 60 + min;
     const timeToMins = (h: number, m: number) => h * 60 + m;
     const morningStart = timeToMins(5, 45);
-    const morningEnd   = timeToMins(14, 15);
+    const morningEnd = timeToMins(14, 15);
     const eveningStart = timeToMins(13, 45);
-    const eveningEnd   = timeToMins(22, 15);
+    const eveningEnd = timeToMins(22, 15);
     const inRange = (t: number, start: number, end: number) => t >= start && t < end;
     if (inRange(totalMins, morningStart, morningEnd)) return 'morning';
     if (inRange(totalMins, eveningStart, eveningEnd)) return 'evening';
@@ -48,9 +48,9 @@ const App = () => {
   }
 
   function getPeriodForDate(d: Date) {
-  const day = d.getDate();
-  return day >= 1 && day <= 15 ? 'Jakso 1' : 'Jakso 2';
-}
+    const day = d.getDate();
+    return day >= 1 && day <= 15 ? 'Jakso 1' : 'Jakso 2';
+  }
 
   // When "Lisää suorite" is clicked, auto-detect the shift and show the modal.
   const handleAddSuorite = () => {
@@ -61,7 +61,8 @@ const App = () => {
 
   useEffect(() => {
     // Load stored calendar data asynchronously.
-    localforage.getItem('calendarData')
+    localforage
+      .getItem('calendarData')
       .then((storedData) => {
         if (storedData) {
           setData(storedData as { [key: string]: DateData });
@@ -69,11 +70,12 @@ const App = () => {
       })
       .catch((err) => console.error('Error retrieving calendarData:', err));
   }, [date]);
-  
+
   useEffect(() => {
     // Save calendar data asynchronously whenever 'data' changes.
-    localforage.setItem('calendarData', data)
-      .catch((err) => console.error('Error saving calendarData:', err));
+    localforage.setItem('calendarData', data).catch((err) =>
+      console.error('Error saving calendarData:', err)
+    );
   }, [data]);
 
   useEffect(() => {
@@ -117,15 +119,17 @@ const App = () => {
       alert("Lisää aika väliltä 0-16");
       return;
     }
-    const dateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    const dateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(
+      date.getDate()
+    ).padStart(2, '0')}`;
     setData((prevData) => ({
       ...prevData,
-      [dateString]: { 
-        performance: parsedPerformance, 
-        hours: parsedHours, 
-        overtime, 
-        freeDay
-      }
+      [dateString]: {
+        performance: parsedPerformance,
+        hours: parsedHours,
+        overtime,
+        freeDay,
+      },
     }));
     setShowModal(false);
     setFormData({
@@ -139,7 +143,9 @@ const App = () => {
   };
 
   const handleDeleteData = () => {
-    const dateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    const dateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(
+      date.getDate()
+    ).padStart(2, '0')}`;
     setData((prevData) => {
       const newData = { ...prevData };
       delete newData[dateString];
@@ -163,7 +169,9 @@ const App = () => {
   const overallAverage = parseFloat(calculateAverage(data, filterDates));
   const overallAveragePercentage = calculatePercentage(overallAverage);
 
-  const selectedDateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  const selectedDateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(
+    date.getDate()
+  ).padStart(2, '0')}`;
   const selectedDateData = data[selectedDateString];
   const selectedDatePercentage = selectedDateData ? computePerformancePercentage(selectedDateData) : null;
 
@@ -173,43 +181,45 @@ const App = () => {
       
       {/* Calendar – All dates are now clickable */}
       <div className="bg-primary p-4 rounded-lg shadow-lg calendar-container">
-      <Calendar
-        onChange={onChange}
-        value={date}
-        locale="fi-FI"
-        tileContent={({ date: tileDate, view }) => {
-          const dateString = `${tileDate.getFullYear()}-${String(tileDate.getMonth() + 1).padStart(2, '0')}-${String(tileDate.getDate()).padStart(2, '0')}`;
-          if (view === 'month' && data[dateString]) {
-            const entry = data[dateString];
-            const percentage = computePerformancePercentage(entry);
-            return (
-              <div style={{ color: 'black', fontSize: '12px' }}>
-                {percentage}%
-              </div>
-            );
-          }
-          return null;
-        }}
-        tileClassName={({ date: tileDate, view }) => {
-          if (view !== 'month') return '';
-          const classes: string[] = [];
-
-          // If the tile date matches the selected date, mark it as selected.
-          if (tileDate.toDateString() === date.toDateString()) {
-            classes.push('selected-tile');
-          } else if (filterDates(tileDate)) {
-            // Otherwise, if it's in the current period, add the current period class.
-            classes.push('currentPeriod');
-          }
-
-          // Also add a highlight if there is data for this tile.
-          const tileDateString = `${tileDate.getFullYear()}-${String(tileDate.getMonth() + 1).padStart(2, '0')}-${String(tileDate.getDate()).padStart(2, '0')}`;
-          if (data[tileDateString]) {
-            classes.push('highlight');
-          }
-          return classes.join(' ');
-        }}
-      />
+        <Calendar
+          onChange={onChange}
+          value={date}
+          locale="fi-FI"
+          tileContent={({ date: tileDate, view }) => {
+            const dateString = `${tileDate.getFullYear()}-${String(tileDate.getMonth() + 1).padStart(2, '0')}-${String(
+              tileDate.getDate()
+            ).padStart(2, '0')}`;
+            if (view === 'month' && data[dateString]) {
+              const entry = data[dateString];
+              const percentage = computePerformancePercentage(entry);
+              return (
+                <div style={{ color: 'black', fontSize: '12px' }}>
+                  {percentage}%
+                </div>
+              );
+            }
+            return null;
+          }}
+          tileClassName={({ date: tileDate, view }) => {
+            if (view !== 'month') return '';
+            const classes: string[] = [];
+            // If the tile date matches the selected date, mark it as selected.
+            if (tileDate.toDateString() === date.toDateString()) {
+              classes.push('selected-tile');
+            } else if (filterDates(tileDate)) {
+              // Otherwise, if it's in the current period, add the current period class.
+              classes.push('currentPeriod');
+            }
+            // Also add a highlight if there is data for this tile.
+            const dateString = `${tileDate.getFullYear()}-${String(tileDate.getMonth() + 1).padStart(2, '0')}-${String(
+              tileDate.getDate()
+            ).padStart(2, '0')}`;
+            if (data[dateString]) {
+              classes.push('highlight');
+            }
+            return classes.join(' ');
+          }}
+        />
       </div>
       <div className="flex space-x-4 mt-4">
         <button onClick={handleAddSuorite} className="bg-secondary text-white px-4 py-2 rounded">
@@ -238,7 +248,7 @@ const App = () => {
         </div>
       )}
 
-      <Tavoite data={data} period={period} />
+      <Tavoite data={data} period={period} selectedDate={date} />
 
       {showModal && (
         <PerformanceModal
