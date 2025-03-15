@@ -18,7 +18,6 @@ export interface DailyData {
  * @param hours - input hours
  * @param overtime - overtime flag
  * @param freeDay - freeDay flag
- * @param isForklift - if true, applies forklift‐specific calculation
  * @param applyBreakDeduction - if false, no break deduction is applied
  * @returns effective hours
  */
@@ -26,7 +25,6 @@ export const effectiveHours = (
   hours: number,
   overtime: boolean,
   freeDay: boolean,
-  isForklift: boolean = false,
   applyBreakDeduction: boolean = true
 ): number => {
   if (freeDay) {
@@ -42,17 +40,9 @@ export const effectiveHours = (
       // No deduction for very short shifts.
       return hours;
     } else if (hours <= 8) {
-      if (applyBreakDeduction) {
-        return hours - (isForklift ? 0.25 : 0.75);
-      } else {
-        return hours;
-      }
+      return applyBreakDeduction ? hours - 0.75 : hours;
     } else {
-      if (applyBreakDeduction) {
-        return (isForklift ? (8 - 0.25) : 7.25) + (hours - 8) * 0.967;
-      } else {
-        return 8 + (hours - 8) * 0.967;
-      }
+      return applyBreakDeduction ? 7.25 + (hours - 8) * 0.967 : 8 + (hours - 8) * 0.967;
     }
   }
 };
@@ -62,10 +52,9 @@ export const effectiveHours = (
  */
 export const computePerformancePercentage = (
   entry: DateData,
-  isForklift: boolean = false,
   applyBreakDeduction: boolean = true
 ): number => {
-  const eff = effectiveHours(entry.hours, entry.overtime, entry.freeDay, isForklift, applyBreakDeduction);
+  const eff = effectiveHours(entry.hours, entry.overtime, entry.freeDay, applyBreakDeduction);
   if (eff <= 0) return 0;
   return Math.round((entry.performance / eff) * 100);
 };

@@ -10,6 +10,7 @@ import Multiplier from './Multiplier';
 import MeatCalculator from './MeatCalculator';
 import PerformanceModal from './PerformanceModal';
 import localforage from 'localforage';
+import { migrateOldData } from './migration';
 
 const App = () => {
   // Data now maps date strings to DailyData objects.
@@ -57,6 +58,18 @@ const App = () => {
     setShowModal(true);
   };
 
+  useEffect(() => {
+    localforage
+      .getItem('calendarData')
+      .then((storedData) => {
+        if (storedData) {
+          const migratedData = migrateOldData(storedData as { [key: string]: any });
+          setData(migratedData);
+        }
+      })
+      .catch((err) => console.error('Error retrieving calendarData:', err));
+  }, [date]);
+  
   useEffect(() => {
     localforage
       .getItem('calendarData')
@@ -180,21 +193,9 @@ const App = () => {
     date.getDate()
   ).padStart(2, '0')}`;
   const selectedDayData = data[selectedDateString] || {};
-  // Determine break deduction per mode if both exist.
-  let normalApply = true;
-  let forkliftApply = true;
-  if (selectedDayData.normal && selectedDayData.forklift) {
-    if (selectedDayData.normal.hours >= selectedDayData.forklift.hours) {
-      normalApply = true;
-      forkliftApply = false;
-    } else {
-      normalApply = false;
-      forkliftApply = true;
-    }
-  }
-  const selectedNormalPercentage = selectedDayData.normal ? computePerformancePercentage(selectedDayData.normal, false, normalApply) : null;
-  const selectedForkliftPercentage = selectedDayData.forklift ? computePerformancePercentage(selectedDayData.forklift, true, forkliftApply) : null;
 
+  // When both normal and forklift exist, the original logic for break deduction is not used in the tile.
+  // Instead, we simply call computePerformancePercentage with the entry.
   return (
     <div className="bg-primary min-h-screen text-gray-100 flex flex-col items-center p-4">
       <h2 className="text-secondary text-2xl font-bold mb-2">Suoritelaskuri</h2>
@@ -206,29 +207,23 @@ const App = () => {
           value={date}
           locale="fi-FI"
           tileContent={({ date: tileDate, view }) => {
-            const dateString = `${tileDate.getFullYear()}-${String(tileDate.getMonth() + 1).padStart(2, '0')}-${String(tileDate.getDate()).padStart(2, '0')}`;
+            const dateString = `${tileDate.getFullYear()}-${String(tileDate.getMonth() + 1).padStart(2, '0')}-${String(
+              tileDate.getDate()
+            ).padStart(2, '0')}`;
             if (view === 'month' && data[dateString]) {
               const dayData = data[dateString];
               let indicators = [];
               if (dayData.normal) {
-                let normApply = true;
-                if (dayData.normal && dayData.forklift) {
-                  normApply = dayData.normal.hours >= dayData.forklift.hours;
-                }
                 indicators.push(
                   <div key="normal" style={{ color: 'black', fontSize: '10px', marginRight: '2px' }}>
-                    {computePerformancePercentage(dayData.normal, false, normApply)}%
+                    {computePerformancePercentage(dayData.normal)}%
                   </div>
                 );
               }
               if (dayData.forklift) {
-                let forkApply = true;
-                if (dayData.normal && dayData.forklift) {
-                  forkApply = dayData.forklift.hours > dayData.normal.hours;
-                }
                 indicators.push(
                   <div key="forklift" style={{ color: 'black', fontSize: '9px', marginRight: '2px' }}>
-                    {computePerformancePercentage(dayData.forklift, true, forkApply)}%
+                    {computePerformancePercentage(dayData.forklift)}%
                   </div>
                 );
               }
@@ -268,22 +263,12 @@ const App = () => {
           <h3 className="text-lg font-bold">{formatDate(selectedDateString)}</h3>
           {selectedDayData.normal && (
             <p>
-              Keräyssuorite: {selectedDayData.normal.performance} ({selectedNormalPercentage}%)
+              Keräyssuorite: {selectedDayData.normal.performance} ({computePerformancePercentage(selectedDayData.normal)}%) {selectedDayData.normal.hours} tunnissa ({selectedDayData.normal.overtime || selectedDayData.normal.freeDay ? 'ylityö' : 'normaali'})
             </p>
           )}
           {selectedDayData.forklift && (
             <p>
-              Trukkisuorite: {selectedDayData.forklift.performance} ({selectedForkliftPercentage}%)
-            </p>
-          )}
-          {selectedDayData.normal && (
-            <p>
-              Työpäivän pituus (0591): {selectedDayData.normal.hours} ({selectedDayData.normal.overtime || selectedDayData.normal.freeDay ? 'ylityö' : 'normaali'})
-            </p>
-          )}
-          {selectedDayData.forklift && (
-            <p>
-              Työpäivän pituus (2301): {selectedDayData.forklift.hours} ({selectedDayData.forklift.overtime || selectedDayData.forklift.freeDay ? 'ylityö' : 'normaali'})
+              Trukkisuorite: {selectedDayData.forklift.performance} ({computePerformancePercentage(selectedDayData.forklift)}%) {selectedDayData.forklift.hours} tunnissa ({selectedDayData.forklift.overtime || selectedDayData.forklift.freeDay ? 'ylityö' : 'normaali'})
             </p>
           )}
         </div>
