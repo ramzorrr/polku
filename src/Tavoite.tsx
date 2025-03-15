@@ -9,15 +9,14 @@ import {
   calculateAverage,
   calculatePercentage,
 } from './utils';
-import localforage from 'localforage';
 
-const Tavoite = ({
-  data,
-  period,
-}: {
+interface TavoiteProps {
   data: { [key: string]: DateData };
   period: string;
-}) => {
+  selectedDate: Date;
+}
+
+const Tavoite: React.FC<TavoiteProps> = ({ data, period, selectedDate }) => {
   // Goal is a percentage.
   const [goal, setGoal] = useState(100); // default value
   const [savedGoal, setSavedGoal] = useState<number | null>(null);
@@ -31,18 +30,14 @@ const Tavoite = ({
   const defaultEffectiveFreeDay = 7.75;
   const defaultEffective = defaultEffectiveNormal;
 
-  // On mount, load saved goal from localForage.
+  // On mount, load saved goal from localForage (or localStorage if you prefer).
   useEffect(() => {
-    localforage
-      .getItem('savedGoal')
-      .then((storedGoal) => {
-        if (storedGoal !== null) {
-          const parsedGoal = parseFloat(storedGoal as string);
-          setSavedGoal(parsedGoal);
-          setGoal(parsedGoal);
-        }
-      })
-      .catch((err) => console.error('Error loading savedGoal:', err));
+    const storedGoal = localStorage.getItem('savedGoal');
+    if (storedGoal) {
+      const parsedGoal = parseFloat(storedGoal);
+      setSavedGoal(parsedGoal);
+      setGoal(parsedGoal);
+    }
   }, []);
 
   const handleSliderChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -50,14 +45,10 @@ const Tavoite = ({
   };
 
   const handleSaveGoal = () => {
-    localforage
-      .setItem('savedGoal', goal.toString())
-      .then(() => {
-        setSavedGoal(goal);
-        setMessage('Tavoite tallennettu');
-        setTimeout(() => setMessage(null), 3000);
-      })
-      .catch((err) => console.error('Error saving savedGoal:', err));
+    localStorage.setItem('savedGoal', goal.toString());
+    setSavedGoal(goal);
+    setMessage('Tavoite tallennettu');
+    setTimeout(() => setMessage(null), 3000);
   };
 
   // Utility functions for formatting and filtering dates.
@@ -66,14 +57,16 @@ const Tavoite = ({
     return `${day}.${month}.${year}`;
   };
 
+  // Use the passed 'period' prop to filter dates.
   const filterDates = (date: Date): boolean => {
     const day = date.getDate();
     return period === 'Jakso 1' ? day >= 1 && day <= 15 : day >= 16;
   };
 
-  const selectedDateString = `${new Date().getFullYear()}-${String(
-    new Date().getMonth() + 1
-  ).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`;
+  // Use selectedDate instead of new Date()
+  const selectedDateString = `${selectedDate.getFullYear()}-${String(
+    selectedDate.getMonth() + 1
+  ).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`;
 
   const selectedDateData = data[selectedDateString];
   const selectedDatePercentage = selectedDateData
@@ -81,10 +74,11 @@ const Tavoite = ({
     : null;
 
   // Remaining data calculations.
-  // Also calculates total input hours with adjusted lunch break deductions.
+  // Use selectedDate as the reference date for calculations.
   const calculateRemainingData = () => {
     if (savedGoal === null) return null;
-    const today = new Date();
+    // Use selectedDate instead of today.
+    const today = selectedDate;
     const fullYear = today.getFullYear();
     const month = today.getMonth();
     const dayToday = today.getDate();
@@ -101,19 +95,16 @@ const Tavoite = ({
     const adjustedInputHours = (hours: number, overtime: boolean, freeDay: boolean): number => {
       if (freeDay) return hours;
       if (overtime) {
-        // Overtime day: first 8 hours count as 7.5 and extra hours are full.
         if (hours <= 8) {
           return hours === 8 ? 8 : hours;
         } else {
           return 7.5 + (hours - 8);
         }
       } else {
-        // Normal day: if hours are at least 7, subtract 0.5 from the first 8 hours.
         if (hours < 4) return hours;
         else if (hours <= 8) return hours - 0.5;
         else {
           const extra = hours - 8;
-          // For extra hours, if extra >= 7, subtract an additional 0.5.
           if (extra >= 7) return 7.5 + (extra - 0.5);
           else return 7.5 + extra;
         }
@@ -128,7 +119,6 @@ const Tavoite = ({
           const entry = data[dateString];
           const adjusted = adjustedInputHours(entry.hours, entry.overtime, entry.freeDay);
           totalInputHours += adjusted;
-
           const eff = effectiveHours(entry.hours, entry.overtime, entry.freeDay);
           totalEffectiveLogged += eff;
           totalPerformanceLogged += entry.performance;
@@ -137,8 +127,8 @@ const Tavoite = ({
       }
     });
 
-    // Calculate missing days using the later of today's date or the period's start.
     let missingDays = 0;
+    // Use the later of the selectedDate's day or period's start day.
     for (let d = Math.max(dayToday, periodStartDay); d <= periodEndDay; d++) {
       const currDate = new Date(fullYear, month, d);
       if (currDate.getDay() !== 0 && currDate.getDay() !== 6) {
