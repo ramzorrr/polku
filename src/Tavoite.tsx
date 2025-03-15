@@ -237,6 +237,7 @@ const Tavoite: React.FC<TavoiteProps> = ({ data, period, selectedDate }) => {
       {/* Normal Performance Summary */}
       {savedGoal !== null && remainingDataNormal && (
         <div className="mt-4 grid grid-cols-1 gap-4">
+          <RemainingWorkdays days={sharedMissingDays} />
           <div className="p-6 bg-gradient-to-r from-pink-600 to-pink-400 text-white rounded-lg shadow-md hover:shadow-xl transform hover:scale-105 transition duration-300">
             <h3 className="text-xl font-semibold mb-2">Jakson keskisuorite (0591)</h3>
             <p className="text-2xl font-bold">{remainingDataNormal.currentAveragePercentage}%</p>
@@ -275,7 +276,6 @@ const Tavoite: React.FC<TavoiteProps> = ({ data, period, selectedDate }) => {
             percentage={parseInt(remainingDataForklift.instantlyToGoalPercentage)}
             label="Suoraan tavoitteeseen (2301)"
           />
-          <RemainingWorkdays days={sharedMissingDays} />
         </div>
       )}
     </div>
