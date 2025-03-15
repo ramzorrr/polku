@@ -69,7 +69,7 @@ const App = () => {
       })
       .catch((err) => console.error('Error retrieving calendarData:', err));
   }, [date]);
-  
+
   useEffect(() => {
     localforage
       .getItem('calendarData')
@@ -79,7 +79,7 @@ const App = () => {
         }
       })
       .catch((err) => console.error('Error retrieving calendarData:', err));
-  }, [date]);
+  }, []);
 
   useEffect(() => {
     localforage.setItem('calendarData', data).catch((err) =>
