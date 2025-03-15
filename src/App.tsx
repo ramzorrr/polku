@@ -58,6 +58,7 @@ const App = () => {
     setShowModal(true);
   };
 
+  // Load calendarData once on mount and migrate old data if necessary.
   useEffect(() => {
     localforage
       .getItem('calendarData')
@@ -68,25 +69,16 @@ const App = () => {
         }
       })
       .catch((err) => console.error('Error retrieving calendarData:', err));
-  }, [date]);
-
-  useEffect(() => {
-    localforage
-      .getItem('calendarData')
-      .then((storedData) => {
-        if (storedData) {
-          setData(storedData as { [key: string]: DailyData });
-        }
-      })
-      .catch((err) => console.error('Error retrieving calendarData:', err));
   }, []);
 
+  // Save calendarData whenever it changes.
   useEffect(() => {
     localforage.setItem('calendarData', data).catch((err) =>
       console.error('Error saving calendarData:', err)
     );
   }, [data]);
 
+  // Update period when date changes.
   useEffect(() => {
     setPeriod(getPeriodForDate(date));
   }, [date]);
@@ -194,8 +186,6 @@ const App = () => {
   ).padStart(2, '0')}`;
   const selectedDayData = data[selectedDateString] || {};
 
-  // When both normal and forklift exist, the original logic for break deduction is not used in the tile.
-  // Instead, we simply call computePerformancePercentage with the entry.
   return (
     <div className="bg-primary min-h-screen text-gray-100 flex flex-col items-center p-4">
       <h2 className="text-secondary text-2xl font-bold mb-2">Suoritelaskuri</h2>
