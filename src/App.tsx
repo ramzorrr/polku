@@ -1,4 +1,5 @@
-import { DateData, computePerformancePercentage, calculateAverage, calculatePercentage } from './utils';
+// App.tsx
+import { DateData, DailyData, computePerformancePercentage, calculateAverage, calculatePercentage } from './utils';
 import React, { useState, useEffect } from 'react';
 import Calendar, { CalendarProps } from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
@@ -11,16 +12,14 @@ import PerformanceModal from './PerformanceModal';
 import localforage from 'localforage';
 
 const App = () => {
-  // Data maps date strings to DateData objects.
+  // Data now maps date strings to DailyData objects.
   const [date, setDate] = useState(new Date());
-  const [data, setData] = useState<{ [key: string]: DateData }>({});
+  const [data, setData] = useState<{ [key: string]: DailyData }>({});
   const [period, setPeriod] = useState('');
   const [showModal, setShowModal] = useState(false);
-
-  // Auto-detected shift stored here.
   const [autoShift, setAutoShift] = useState<'morning' | 'evening' | 'night'>('morning');
 
-  // Form state for the modal.
+  // Added "trukki" flag in form state.
   const [formData, setFormData] = useState({
     performance: '',
     hours: '8',
@@ -28,9 +27,9 @@ const App = () => {
     freeDay: false,
     startTime: '',
     endTime: '',
+    trukki: false,
   });
 
-  // Helper to detect ongoing shift based on current local time.
   function getOngoingShift(): 'morning' | 'evening' | 'night' {
     const now = new Date();
     const hr = now.getHours();
@@ -52,7 +51,6 @@ const App = () => {
     return day >= 1 && day <= 15 ? 'Jakso 1' : 'Jakso 2';
   }
 
-  // When "Lisää suorite" is clicked, auto-detect the shift and show the modal.
   const handleAddSuorite = () => {
     const shiftNow = getOngoingShift();
     setAutoShift(shiftNow);
@@ -60,19 +58,17 @@ const App = () => {
   };
 
   useEffect(() => {
-    // Load stored calendar data asynchronously.
     localforage
       .getItem('calendarData')
       .then((storedData) => {
         if (storedData) {
-          setData(storedData as { [key: string]: DateData });
+          setData(storedData as { [key: string]: DailyData });
         }
       })
       .catch((err) => console.error('Error retrieving calendarData:', err));
   }, [date]);
 
   useEffect(() => {
-    // Save calendar data asynchronously whenever 'data' changes.
     localforage.setItem('calendarData', data).catch((err) =>
       console.error('Error saving calendarData:', err)
     );
@@ -98,17 +94,17 @@ const App = () => {
     }
   };
 
-  // Modal form handlers.
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [e.target.name]: e.target.value,
+      [name]: type === 'checkbox' ? checked : value,
     }));
   };
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const { performance, hours, overtime, freeDay } = formData;
+    const { performance, hours, overtime, freeDay, trukki } = formData;
     const parsedPerformance = parseFloat(performance);
     const parsedHours = parseFloat(hours);
     if (isNaN(parsedPerformance)) {
@@ -122,15 +118,25 @@ const App = () => {
     const dateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(
       date.getDate()
     ).padStart(2, '0')}`;
-    setData((prevData) => ({
-      ...prevData,
-      [dateString]: {
-        performance: parsedPerformance,
-        hours: parsedHours,
-        overtime,
-        freeDay,
-      },
-    }));
+    setData((prevData) => {
+      const dayData: DailyData = prevData[dateString] || {};
+      if (trukki) {
+        dayData.forklift = {
+          performance: parsedPerformance,
+          hours: parsedHours,
+          overtime,
+          freeDay,
+        };
+      } else {
+        dayData.normal = {
+          performance: parsedPerformance,
+          hours: parsedHours,
+          overtime,
+          freeDay,
+        };
+      }
+      return { ...prevData, [dateString]: dayData };
+    });
     setShowModal(false);
     setFormData({
       performance: '',
@@ -139,6 +145,7 @@ const App = () => {
       freeDay: false,
       startTime: '',
       endTime: '',
+      trukki: false,
     });
   };
 
@@ -158,22 +165,35 @@ const App = () => {
     return `${day}.${month}.${year}`;
   };
 
-  // In this version, we do not disable any dates.
   const filterDates = (d: Date): boolean => {
-    // This function is still used for calculating averages.
     const day = d.getDate();
     return period === 'Jakso 1' ? day >= 1 && day <= 15 : day >= 16;
   };
 
-  // Use the imported calculateAverage and calculatePercentage functions.
-  const overallAverage = parseFloat(calculateAverage(data, filterDates));
-  const overallAveragePercentage = calculatePercentage(overallAverage);
+  // Averages for the calendar slider (using normal data by default)
+  const overallAverageNormal = parseFloat(calculateAverage(data, filterDates, 'normal'));
+  const overallAveragePercentageNormal = calculatePercentage(overallAverageNormal);
+  const overallAverageForklift = parseFloat(calculateAverage(data, filterDates, 'forklift'));
+  const overallAveragePercentageForklift = calculatePercentage(overallAverageForklift);
 
   const selectedDateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(
     date.getDate()
   ).padStart(2, '0')}`;
-  const selectedDateData = data[selectedDateString];
-  const selectedDatePercentage = selectedDateData ? computePerformancePercentage(selectedDateData) : null;
+  const selectedDayData = data[selectedDateString] || {};
+  // Determine break deduction per mode if both exist.
+  let normalApply = true;
+  let forkliftApply = true;
+  if (selectedDayData.normal && selectedDayData.forklift) {
+    if (selectedDayData.normal.hours >= selectedDayData.forklift.hours) {
+      normalApply = true;
+      forkliftApply = false;
+    } else {
+      normalApply = false;
+      forkliftApply = true;
+    }
+  }
+  const selectedNormalPercentage = selectedDayData.normal ? computePerformancePercentage(selectedDayData.normal, false, normalApply) : null;
+  const selectedForkliftPercentage = selectedDayData.forklift ? computePerformancePercentage(selectedDayData.forklift, true, forkliftApply) : null;
 
   return (
     <div className="bg-primary min-h-screen text-gray-100 flex flex-col items-center p-4">
@@ -186,31 +206,44 @@ const App = () => {
           value={date}
           locale="fi-FI"
           tileContent={({ date: tileDate, view }) => {
-            const dateString = `${tileDate.getFullYear()}-${String(tileDate.getMonth() + 1).padStart(2, '0')}-${String(
-              tileDate.getDate()
-            ).padStart(2, '0')}`;
+            const dateString = `${tileDate.getFullYear()}-${String(tileDate.getMonth() + 1).padStart(2, '0')}-${String(tileDate.getDate()).padStart(2, '0')}`;
             if (view === 'month' && data[dateString]) {
-              const entry = data[dateString];
-              const percentage = computePerformancePercentage(entry);
-              return (
-                <div style={{ color: 'black', fontSize: '12px' }}>
-                  {percentage}%
-                </div>
-              );
+              const dayData = data[dateString];
+              let indicators = [];
+              if (dayData.normal) {
+                let normApply = true;
+                if (dayData.normal && dayData.forklift) {
+                  normApply = dayData.normal.hours >= dayData.forklift.hours;
+                }
+                indicators.push(
+                  <div key="normal" style={{ color: 'black', fontSize: '10px', marginRight: '2px' }}>
+                    {computePerformancePercentage(dayData.normal, false, normApply)}%
+                  </div>
+                );
+              }
+              if (dayData.forklift) {
+                let forkApply = true;
+                if (dayData.normal && dayData.forklift) {
+                  forkApply = dayData.forklift.hours > dayData.normal.hours;
+                }
+                indicators.push(
+                  <div key="forklift" style={{ color: 'black', fontSize: '9px', marginRight: '2px' }}>
+                    {computePerformancePercentage(dayData.forklift, true, forkApply)}%
+                  </div>
+                );
+              }
+              return <div>{indicators}</div>;
             }
             return null;
           }}
           tileClassName={({ date: tileDate, view }) => {
             if (view !== 'month') return '';
             const classes: string[] = [];
-            // If the tile date matches the selected date, mark it as selected.
             if (tileDate.toDateString() === date.toDateString()) {
               classes.push('selected-tile');
             } else if (filterDates(tileDate)) {
-              // Otherwise, if it's in the current period, add the current period class.
               classes.push('currentPeriod');
             }
-            // Also add a highlight if there is data for this tile.
             const dateString = `${tileDate.getFullYear()}-${String(tileDate.getMonth() + 1).padStart(2, '0')}-${String(
               tileDate.getDate()
             ).padStart(2, '0')}`;
@@ -230,21 +263,29 @@ const App = () => {
         </button>
       </div>
 
-      {selectedDateData !== undefined && (
+      {(selectedDayData.normal || selectedDayData.forklift) && (
         <div className="mt-4 p-4 bg-gray-800 text-white rounded shadow-lg">
           <h3 className="text-lg font-bold">{formatDate(selectedDateString)}</h3>
-          <p>
-            Suorite: {selectedDateData.performance} ({selectedDatePercentage}%)
-          </p>
-          <p>
-            Työpäivän pituus: {selectedDateData.hours} (
-            {selectedDateData.freeDay
-              ? 'ylityö'
-              : selectedDateData.overtime 
-              ? 'ylityö'
-              : 'normaali'}
-            )
-          </p>
+          {selectedDayData.normal && (
+            <p>
+              Keräyssuorite: {selectedDayData.normal.performance} ({selectedNormalPercentage}%)
+            </p>
+          )}
+          {selectedDayData.forklift && (
+            <p>
+              Trukkisuorite: {selectedDayData.forklift.performance} ({selectedForkliftPercentage}%)
+            </p>
+          )}
+          {selectedDayData.normal && (
+            <p>
+              Työpäivän pituus (0591): {selectedDayData.normal.hours} ({selectedDayData.normal.overtime || selectedDayData.normal.freeDay ? 'ylityö' : 'normaali'})
+            </p>
+          )}
+          {selectedDayData.forklift && (
+            <p>
+              Työpäivän pituus (2301): {selectedDayData.forklift.hours} ({selectedDayData.forklift.overtime || selectedDayData.forklift.freeDay ? 'ylityö' : 'normaali'})
+            </p>
+          )}
         </div>
       )}
 

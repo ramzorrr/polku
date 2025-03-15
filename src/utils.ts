@@ -7,24 +7,27 @@ export interface DateData {
   freeDay: boolean;
 }
 
+export interface DailyData {
+  normal?: DateData;
+  forklift?: DateData;
+}
+
 /**
  * Calculates effective working hours.
  *
- * Modes:
- * - Normal (freeDay === false, overtime === false):
- *    - For hours ≤ 8: effective = hours - 0.75
- *    - For hours > 8: effective = 7.25 (base for 8 hours) + (extra hours - 0.75)
- * - Overtime on a regular day (freeDay === false, overtime === true):
- *    - For hours ≤ 8: effective = hours - 0.75
- *    - For hours > 8: effective = 7.25 (base) + (extra hours * 0.967)
- * - Overtime on a free day (freeDay === true):
- *    - For hours ≤ 8: effective = hours - 0.25
- *    - For hours > 8: effective = (8 - 0.25) + (extra hours × 0.967)
+ * @param hours - input hours
+ * @param overtime - overtime flag
+ * @param freeDay - freeDay flag
+ * @param isForklift - if true, applies forklift‐specific calculation
+ * @param applyBreakDeduction - if false, no break deduction is applied
+ * @returns effective hours
  */
 export const effectiveHours = (
   hours: number,
   overtime: boolean,
-  freeDay: boolean
+  freeDay: boolean,
+  isForklift: boolean = false,
+  applyBreakDeduction: boolean = true
 ): number => {
   if (freeDay) {
     // Free day: use raw hours multiplied by 0.967.
@@ -32,57 +35,62 @@ export const effectiveHours = (
   } else if (overtime) {
     // Overtime day: enforce minimum 8 and maximum 16 hours.
     const clampedHours = Math.max(8, Math.min(hours, 16));
-    // Effective = first 8 hours count as 7.25, plus extra hours multiplied by 0.967.
     return 7.25 + (clampedHours - 8) * 0.967;
   } else {
-    // Normal day (overtime not ticked):
+    // Normal (non-overtime) day:
     if (hours < 4) {
       // No deduction for very short shifts.
       return hours;
     } else if (hours <= 8) {
-      // Deduct 0.75 for shifts between 4 and 8 hours.
-      return hours - 0.75;
+      if (applyBreakDeduction) {
+        return hours - (isForklift ? 0.25 : 0.75);
+      } else {
+        return hours;
+      }
     } else {
-      // For shifts over 8 hours, effective hours = 7.25 (for first 8) + extra hours × 0.967.
-      return 7.25 + (hours - 8) * 0.967;
+      if (applyBreakDeduction) {
+        return (isForklift ? (8 - 0.25) : 7.25) + (hours - 8) * 0.967;
+      } else {
+        return 8 + (hours - 8) * 0.967;
+      }
     }
   }
 };
 
-
 /**
  * Computes performance percentage given an entry.
- * The percentage is computed as (performance / effectiveHours) * 100.
  */
-export const computePerformancePercentage = (entry: DateData): number => {
-  const eff = effectiveHours(entry.hours, entry.overtime, entry.freeDay);
+export const computePerformancePercentage = (
+  entry: DateData,
+  isForklift: boolean = false,
+  applyBreakDeduction: boolean = true
+): number => {
+  const eff = effectiveHours(entry.hours, entry.overtime, entry.freeDay, isForklift, applyBreakDeduction);
   if (eff <= 0) return 0;
   return Math.round((entry.performance / eff) * 100);
 };
 
 /**
  * Calculates the average performance over the dates that pass the filter.
- * 
- * @param data - A record mapping date strings to DateData.
- * @param filterDates - A function that takes a Date and returns true if it should be included.
- * @returns The average performance as a string (fixed to 2 decimals).
+ * The mode parameter indicates whether to use "normal" or "forklift" data.
  */
 export const calculateAverage = (
-  data: { [key: string]: DateData },
-  filterDates: (date: Date) => boolean
+  data: { [key: string]: DailyData },
+  filterDates: (date: Date) => boolean,
+  mode: 'normal' | 'forklift' = 'normal'
 ): string => {
   const filteredDates = Object.keys(data).filter((dateString) => {
     const dateObj = new Date(dateString + "T00:00:00");
     return filterDates(dateObj);
   });
   const total = filteredDates.reduce((sum, dateString) => {
-    const perf = Number(data[dateString].performance);
+    const entry = data[dateString][mode];
+    const perf = entry ? Number(entry.performance) : 0;
     return sum + (isNaN(perf) ? 0 : perf);
   }, 0);
   const average = filteredDates.length > 0 ? total / filteredDates.length : 0;
   return average.toFixed(2);
 };
-
 
 export const calculatePercentage = (value: number): number => {
   const percentage = ((value - 7.25) / (10.88 - 7.25)) * 50 + 100;

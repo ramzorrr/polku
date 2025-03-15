@@ -1,3 +1,4 @@
+// PerformanceModal.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import TimePicker from 'react-time-picker';
 import 'react-clock/dist/Clock.css';
@@ -8,11 +9,12 @@ interface PerformanceModalProps {
     hours: string;
     overtime: boolean;
     freeDay: boolean;
-    startTime?: string; // e.g., "21:45"
-    endTime?: string;   // e.g., "06:15"
+    startTime?: string;
+    endTime?: string;
+    trukki: boolean;
   };
   defaultShift: 'morning' | 'evening' | 'night';
-  onFormChange: (e: any) => void; // using "any" for synthetic events
+  onFormChange: (e: any) => void;
   onSubmit: (e: React.FormEvent) => void;
   onClose: () => void;
 }
@@ -28,7 +30,7 @@ function computeHoursFromTimes(start: string, end: string): number {
   const startDate = new Date(0, 0, 0, sh, sm);
   let endDate = new Date(0, 0, 0, eh, em);
   if (eh < sh) {
-    endDate = new Date(0, 0, 1, eh, em); // assume next day
+    endDate = new Date(0, 0, 1, eh, em);
   }
   let diff = (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60);
   return diff < 0 ? 0 : diff;
@@ -50,10 +52,6 @@ function addHours(time: string, hoursToAdd: number): string {
 
 /**
  * Determines a default sign‑in time based on the current local time.
- * For example:
- *  - If current time is between 05:45 and 14:15, default is "05:45"
- *  - If between 13:45 and 22:15, default is "13:45"
- *  - Otherwise, default is "21:45"
  */
 function getDefaultStartTime(): string {
   const now = new Date();
@@ -71,7 +69,6 @@ function getDefaultStartTime(): string {
   }
 }
 
-// Import the effectiveHours helper from utils.
 import { effectiveHours } from './utils';
 
 const PerformanceModal: React.FC<PerformanceModalProps> = ({
@@ -86,7 +83,6 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
     performanceInputRef.current?.focus();
   }, []);
 
-  // On mount, if no sign‑in time is provided, set it to the default based on current time.
   useEffect(() => {
     if (!formData.startTime || formData.startTime.trim() === "") {
       const defaultStart = getDefaultStartTime();
@@ -94,7 +90,6 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
     }
   }, [formData.startTime, onFormChange]);
 
-  // Auto-set sign-out time if sign-in time is set and sign-out is empty.
   useEffect(() => {
     if (formData.startTime && (!formData.endTime || formData.endTime.trim() === "")) {
       const autoEnd = addHours(formData.startTime, 8);
@@ -104,7 +99,6 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
     }
   }, [formData.startTime, formData.endTime, onFormChange]);
 
-  // When sign-in time changes, update startTime and recalc hours if sign-out exists.
   const handleStartTime = (newVal: string) => {
     onFormChange({ target: { name: 'startTime', value: newVal } } as any);
     if (formData.endTime && formData.endTime.trim() !== "") {
@@ -113,7 +107,6 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
     }
   };
 
-  // When sign-out time changes, update endTime and recalc hours.
   const handleEndTime = (newVal: string) => {
     onFormChange({ target: { name: 'endTime', value: newVal } } as any);
     if (formData.startTime && formData.startTime.trim() !== "") {
@@ -122,19 +115,15 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
     }
   };
 
-  // --- Dynamic Performance Calculation ---
   const hoursNumber = parseFloat(formData.hours) || 0;
   const perfValue = parseFloat(formData.performance) || 0;
   const effective = effectiveHours(hoursNumber, formData.overtime, formData.freeDay);
   const currentPercentage = effective > 0 ? (perfValue / effective) * 100 : 0;
   const additionalRequired = effective - perfValue;
-  // --- End Dynamic Performance Calculation ---
 
-  // Local submit handler with Easter egg.
   const handleLocalSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const parsedPerformance = parseFloat(formData.performance);
-    // Use a tolerance of 0.01 for floating point comparison.
     if (Math.abs(parsedPerformance - 12.217) < 0.001) {
       alert("Miro on botti joka syö vehnäpullaa!");
     }
@@ -146,7 +135,6 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
       <div className="bg-white p-6 rounded text-black shadow-lg w-80 transform transition-all duration-300">
         <h3 className="text-xl font-bold mb-4">Lisää suorite</h3>
         <form onSubmit={handleLocalSubmit}>
-          {/* SIGN-IN TIME */}
           <div className="mb-4">
             <p className="font-semibold mb-2">Kirjautumisaika:</p>
             <input
@@ -158,7 +146,6 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
               step="60"
             />
           </div>
-          {/* SIGN-OUT TIME */}
           <div className="mb-4">
             <p className="font-semibold mb-2">Kirjaudu ulos:</p>
             <input
@@ -170,7 +157,6 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
               step="60"
             />
           </div>
-          {/* PERFORMANCE */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-black">Suorite:</label>
             <input
@@ -193,7 +179,6 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
               {currentPercentage.toFixed(1)}%. Tarvitset {additionalRequired.toFixed(2)} saavuttaaksesi 100%.
             </p>
           </div>
-          {/* HOURS */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-black">Työtunnit:</label>
             <input
@@ -208,7 +193,6 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
               required
             />
           </div>
-          {/* OVERTIME Checkbox */}
           <div className="mb-4 flex items-center">
             <label className="block text-sm font-medium text-black mr-2">
               Oma vuoro + ylityö (yli 8h pv):
@@ -217,17 +201,10 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
               type="checkbox"
               name="overtime"
               checked={formData.overtime}
-              onChange={(e) => {
-                const checked = e.target.checked;
-                onFormChange({ target: { name: 'overtime', value: e.target.checked } } as any)
-                if (checked) {
-                  onFormChange({ target: { name: 'freeDay', value: false } } as any);
-                }
-              }}
+              onChange={onFormChange}
               className="h-4 w-4"
             />
           </div>
-          {/* FREE DAY Checkbox */}
           <div className="mb-4 flex items-center">
             <label className="block text-sm font-medium text-black mr-2">
               Ylityö:
@@ -236,18 +213,22 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
               type="checkbox"
               name="freeDay"
               checked={formData.freeDay}
-              onChange={(e) => {
-                const checked = e.target.checked;
-                onFormChange({ target: { name: 'freeDay', value: checked } } as any);
-                // If this checkbox is ticked, ensure overtime is false.
-                if (checked) {
-                  onFormChange({ target: { name: 'overtime', value: false } } as any);
-                }
-              }}
+              onChange={onFormChange}
               className="h-4 w-4"
             />
           </div>
-          {/* BUTTONS */}
+          <div className="mb-4 flex items-center">
+            <label className="block text-sm font-medium text-black mr-2">
+              Trukki:
+            </label>
+            <input
+              type="checkbox"
+              name="trukki"
+              checked={formData.trukki}
+              onChange={onFormChange}
+              className="h-4 w-4"
+            />
+          </div>
           <div className="flex justify-end">
             <button
               type="button"
