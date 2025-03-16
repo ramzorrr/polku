@@ -6,14 +6,16 @@ import RemainingWorkdays from './RemainingWorkdays';
 import localforage from 'localforage';
 import { DailyData, calculatePercentage, performanceToEuro, forkliftPerformanceToEuro } from './utils';
 import { usePerformanceCalculations } from './usePerformanceCalculations';
+import { FaWarehouse } from 'react-icons/fa';
 
 interface TavoiteProps {
   data: { [key: string]: DailyData };
   period: string;
   selectedDate: Date;
+  warehouse: string;
 }
 
-const Tavoite: React.FC<TavoiteProps> = ({ data, period, selectedDate }) => {
+const Tavoite: React.FC<TavoiteProps> = ({ data, period, selectedDate, warehouse }) => {
   const [goal, setGoal] = useState(100);
   const [savedGoal, setSavedGoal] = useState<number | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -138,7 +140,7 @@ const Tavoite: React.FC<TavoiteProps> = ({ data, period, selectedDate }) => {
             <p className="text-2xl font-bold">{remainingDataNormal.totalInputHours} h</p>
             <h3 className="text-xl font-semibold mt-4">Maksettu suoritteesta</h3>
             <p className="text-xl font-bold">
-              {remainingDataNormal.totalInputHours}h x {performanceToEuro(Number(remainingDataNormal.currentAveragePercentage))} €/h = {(Number(remainingDataNormal.totalInputHours) * performanceToEuro(Number(remainingDataNormal.currentAveragePercentage))).toFixed(2)} €
+            {remainingDataNormal.totalInputHours}h x {performanceToEuro(Number(remainingDataNormal.currentAveragePercentage), warehouse)} €/h = {(Number(remainingDataNormal.totalInputHours) * performanceToEuro(Number(remainingDataNormal.currentAveragePercentage), warehouse)).toFixed(2)} €
             </p>
           </div>
           {!periodCompleted && (
@@ -168,7 +170,7 @@ const Tavoite: React.FC<TavoiteProps> = ({ data, period, selectedDate }) => {
             <p className="text-2xl font-bold">{remainingDataForklift.totalInputHours} h</p>
             <h3 className="text-xl font-semibold mt-4">Maksettu suoritteesta</h3>
             <p className="text-xl font-bold">
-              {remainingDataForklift.totalInputHours}h x {forkliftPerformanceToEuro(Number(remainingDataForklift.currentAveragePercentage))} €/h = {(Number(remainingDataForklift.totalInputHours) * forkliftPerformanceToEuro(Number(remainingDataForklift.currentAveragePercentage))).toFixed(2)} €
+              {remainingDataForklift.totalInputHours}h x {forkliftPerformanceToEuro(Number(remainingDataForklift.currentAveragePercentage), warehouse)} €/h = {(Number(remainingDataForklift.totalInputHours) * forkliftPerformanceToEuro(Number(remainingDataForklift.currentAveragePercentage), warehouse)).toFixed(2)} €
             </p>
           </div>
           {!periodCompleted && (

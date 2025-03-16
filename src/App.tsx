@@ -21,6 +21,7 @@ const App = () => {
   const [autoShift, setAutoShift] = useState<'morning' | 'evening' | 'night'>('morning');
   const [showChangelogPopup, setShowChangelogPopup] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [warehouse, setWarehouse] = useState<string>('pakaste'); // default to "pakaste"
 
   // Added "trukki" flag in form state.
   const [formData, setFormData] = useState({
@@ -104,6 +105,22 @@ const App = () => {
       }
       setShowModal(true);
     }
+  };
+
+  useEffect(() => {
+    localforage.getItem<string>('warehouse').then((value) => {
+      if (value) {
+        setWarehouse(value);
+      }
+    });
+  }, []);
+
+  const handleWarehouseChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selected = e.target.value;
+    setWarehouse(selected);
+    localforage.setItem('warehouse', selected).catch(err =>
+      console.error('Error saving warehouse:', err)
+    );
   };
 
   // Changelog popup: check if user has seen it.
@@ -255,6 +272,15 @@ const App = () => {
 
   return (
     <div className="bg-primary min-h-screen text-gray-100 flex flex-col items-center p-4">
+      {/* Warehouse selection dropdown */}
+      <div className="mb-4">
+        <label className="mr-2 font-semibold">Valitse varasto:</label>
+        <select value={warehouse} onChange={handleWarehouseChange} className="p-2 rounded">
+          <option value="pakaste">Pakaste</option>
+          <option value="kv1">KV1 (ei tietoja)</option>
+          <option value="kv2">KV2 (ei tietoja)</option>
+        </select>
+      </div>
       <h2 className="text-secondary text-2xl font-bold mb-2">Suoritelaskuri</h2>
       
       {/* Calendar – All dates are now clickable */}
@@ -336,7 +362,7 @@ const App = () => {
         </div>
       )}
 
-      <Tavoite data={data} period={period} selectedDate={date} />
+      <Tavoite data={data} period={period} selectedDate={date} warehouse={warehouse} />
 
       {showModal && (
         <PerformanceModal

@@ -122,7 +122,7 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
   const handleLocalSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const parsedPerformance = parseFloat(formData.performance);
-    if (Math.abs(parsedPerformance - 12.217) < 0.001) {
+    if (Math.abs(parsedPerformance - 12.317) < 0.001) {
       alert("Miro on botti joka syö vehnäpullaa!");
     }
     onSubmit(e);
