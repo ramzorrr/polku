@@ -330,7 +330,7 @@ const App = () => {
           )}
           {selectedDayData.forklift && (
             <p>
-              Trukkisuorite: {selectedDayData.forklift.performance} ({computePerformancePercentage(selectedDayData.forklift)}%) {selectedDayData.forklift.hours} tunnissa ({selectedDayData.forklift.overtime || selectedDayData.forklift.freeDay ? '(ylityö)' : ''})
+              Trukkisuorite: {selectedDayData.forklift.performance} ({computePerformancePercentage(selectedDayData.forklift)}%) {selectedDayData.forklift.hours} tunnissa {selectedDayData.forklift.overtime || selectedDayData.forklift.freeDay ? '(ylityö)' : ''}
             </p>
           )}
         </div>
