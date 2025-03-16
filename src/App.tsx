@@ -19,6 +19,8 @@ const App = () => {
   const [period, setPeriod] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [autoShift, setAutoShift] = useState<'morning' | 'evening' | 'night'>('morning');
+  const [showChangelogPopup, setShowChangelogPopup] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   // Added "trukki" flag in form state.
   const [formData, setFormData] = useState({
@@ -53,9 +55,71 @@ const App = () => {
   }
 
   const handleAddSuorite = () => {
+    setIsEditing(false); // New entry mode
     const shiftNow = getOngoingShift();
     setAutoShift(shiftNow);
+    // Reset formData to defaults for a new entry.
+    setFormData({
+      performance: '',
+      hours: '8',
+      overtime: false,
+      freeDay: false,
+      startTime: '',
+      endTime: '',
+      trukki: false,
+    });
     setShowModal(true);
+  };
+
+  const selectedDateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(
+    date.getDate()
+  ).padStart(2, '0')}`;
+  
+  // Use selectedDayData for convenience.
+  const selectedDayData = data[selectedDateString] || {};
+
+  const handleEditDate = () => {
+    if (selectedDayData.normal || selectedDayData.forklift) {
+      setIsEditing(true); // We're editing an existing entry.
+      if (selectedDayData.normal) {
+        setFormData({
+          performance: selectedDayData.normal.performance.toString(),
+          hours: selectedDayData.normal.hours.toString(),
+          overtime: selectedDayData.normal.overtime,
+          freeDay: selectedDayData.normal.freeDay,
+          startTime: selectedDayData.normal.startTime || '', // use stored value if exists
+          endTime: selectedDayData.normal.endTime || '',
+          trukki: false,
+        });
+      } else if (selectedDayData.forklift) {
+        setFormData({
+          performance: selectedDayData.forklift.performance.toString(),
+          hours: selectedDayData.forklift.hours.toString(),
+          overtime: selectedDayData.forklift.overtime,
+          freeDay: selectedDayData.forklift.freeDay,
+          startTime: selectedDayData.forklift.startTime || '',
+          endTime: selectedDayData.forklift.endTime || '',
+          trukki: true,
+        });
+      }
+      setShowModal(true);
+    }
+  };
+
+  // Changelog popup: check if user has seen it.
+  useEffect(() => {
+    localforage.getItem<boolean>('trukkiChangelogShown').then((value) => {
+      if (!value) {
+        setShowChangelogPopup(true);
+      }
+    });
+  }, []);
+
+  const handleClosePopup = () => {
+    localforage
+      .setItem('trukkiChangelogShown', true)
+      .catch((err) => console.error('Error saving trukkiChangelogShown:', err));
+    setShowChangelogPopup(false);
   };
 
   // Load calendarData once on mount and migrate old data if necessary.
@@ -131,6 +195,8 @@ const App = () => {
           hours: parsedHours,
           overtime,
           freeDay,
+          startTime: formData.startTime,
+          endTime: formData.endTime,
         };
       } else {
         dayData.normal = {
@@ -138,20 +204,26 @@ const App = () => {
           hours: parsedHours,
           overtime,
           freeDay,
+          startTime: formData.startTime,
+          endTime: formData.endTime,
         };
       }
       return { ...prevData, [dateString]: dayData };
     });
     setShowModal(false);
-    setFormData({
-      performance: '',
-      hours: '8',
-      overtime: false,
-      freeDay: false,
-      startTime: '',
-      endTime: '',
-      trukki: false,
-    });
+    // When not editing, clear the form.
+    if (!isEditing) {
+      setFormData({
+        performance: '',
+        hours: '8',
+        overtime: false,
+        freeDay: false,
+        startTime: '',
+        endTime: '',
+        trukki: false,
+      });
+    }
+    setIsEditing(false);
   };
 
   const handleDeleteData = () => {
@@ -180,11 +252,6 @@ const App = () => {
   const overallAveragePercentageNormal = calculatePercentage(overallAverageNormal);
   const overallAverageForklift = parseFloat(calculateAverage(data, filterDates, 'forklift'));
   const overallAveragePercentageForklift = calculatePercentage(overallAverageForklift);
-
-  const selectedDateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(
-    date.getDate()
-  ).padStart(2, '0')}`;
-  const selectedDayData = data[selectedDateString] || {};
 
   return (
     <div className="bg-primary min-h-screen text-gray-100 flex flex-col items-center p-4">
@@ -243,6 +310,11 @@ const App = () => {
         <button onClick={handleAddSuorite} className="bg-secondary text-white px-4 py-2 rounded">
           Lisää suorite
         </button>
+        {(selectedDayData.normal || selectedDayData.forklift) && (
+          <button onClick={handleEditDate} className="bg-blue-600 text-white px-4 py-2 rounded">
+            Muokkaa
+          </button>
+        )}
         <button onClick={handleDeleteData} className="bg-red-600 text-white px-4 py-2 rounded">
           Poista suorite
         </button>
@@ -253,12 +325,12 @@ const App = () => {
           <h3 className="text-lg font-bold">{formatDate(selectedDateString)}</h3>
           {selectedDayData.normal && (
             <p>
-              Keräyssuorite: {selectedDayData.normal.performance} ({computePerformancePercentage(selectedDayData.normal)}%) {selectedDayData.normal.hours} tunnissa ({selectedDayData.normal.overtime || selectedDayData.normal.freeDay ? 'ylityö' : 'normaali'})
+              Keräyssuorite: {selectedDayData.normal.performance} ({computePerformancePercentage(selectedDayData.normal)}%) {selectedDayData.normal.hours} tunnissa {selectedDayData.normal.overtime || selectedDayData.normal.freeDay ? '(ylityö)' : ''}
             </p>
           )}
           {selectedDayData.forklift && (
             <p>
-              Trukkisuorite: {selectedDayData.forklift.performance} ({computePerformancePercentage(selectedDayData.forklift)}%) {selectedDayData.forklift.hours} tunnissa ({selectedDayData.forklift.overtime || selectedDayData.forklift.freeDay ? 'ylityö' : 'normaali'})
+              Trukkisuorite: {selectedDayData.forklift.performance} ({computePerformancePercentage(selectedDayData.forklift)}%) {selectedDayData.forklift.hours} tunnissa ({selectedDayData.forklift.overtime || selectedDayData.forklift.freeDay ? '(ylityö)' : ''})
             </p>
           )}
         </div>
@@ -271,9 +343,35 @@ const App = () => {
           formData={formData}
           onFormChange={handleFormChange}
           onSubmit={handleFormSubmit}
-          onClose={() => setShowModal(false)}
+          onClose={() => {
+            setShowModal(false);
+            setIsEditing(false);
+          }}
           defaultShift={autoShift}
+          editing={isEditing}
         />
+      )}
+
+      {showChangelogPopup && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white p-6 rounded text-black shadow-lg w-80">
+            <h3 className="text-xl font-bold mb-4">Uusi päivitys</h3>
+            <p className="mb-4">
+              Uusi päivitys: trukkiseuranta ja euromäärät suoritteista
+            </p>
+            <button
+              onClick={() => {
+                localforage
+                  .setItem('trukkiChangelogShown', true)
+                  .catch((err) => console.error('Error saving trukkiChangelogShown:', err));
+                setShowChangelogPopup(false);
+              }}
+              className="px-4 py-2 bg-secondary text-white rounded"
+            >
+              OK
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );
