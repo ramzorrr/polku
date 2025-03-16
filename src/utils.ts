@@ -49,7 +49,13 @@ export const effectiveHours = (
   }
 };
 
-export const performanceToEuro = (percentage: number): number => {
+export const performanceToEuro = (percentage: number, warehouse: string = "pakaste"): number => {
+  if (warehouse !== "pakaste") {
+    // For KV1/KV2, return 0 (or a placeholder value) until rates are added.
+    return 0;
+  }
+
+
   const performanceRates: { [key: number]: number } = {
     150: 7.07,
     149: 7.02,
@@ -118,7 +124,12 @@ export const performanceToEuro = (percentage: number): number => {
 
 // forkliftPerformanceToEuro.ts (or place in utils.ts)
 
-export const forkliftPerformanceToEuro = (percentage: number): number => {
+export const forkliftPerformanceToEuro = (percentage: number, warehouse: string = "pakaste"): number => {
+  if (warehouse !== "pakaste") {
+    return 0;
+  }
+
+
   const forkliftRates: { [key: number]: number } = {
     150: 7.46,
     149: 7.38,
