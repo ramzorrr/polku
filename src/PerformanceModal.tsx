@@ -1,28 +1,9 @@
 // PerformanceModal.tsx
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import TimePicker from 'react-time-picker';
 import 'react-clock/dist/Clock.css';
 
-interface PerformanceModalProps {
-  formData: {
-    performance: string;
-    hours: string;
-    overtime: boolean;
-    freeDay: boolean;
-    startTime?: string;
-    endTime?: string;
-    trukki: boolean;
-  };
-  defaultShift: 'morning' | 'evening' | 'night';
-  onFormChange: (e: any) => void;
-  onSubmit: (e: React.FormEvent) => void;
-  onClose: () => void;
-}
-
-/**
- * Computes the difference (in hours) between two times in "HH:mm" format.
- * If the end time is earlier than the start time, assumes the end time is on the next day.
- */
+// Helper function to compute the difference in hours between two times.
 function computeHoursFromTimes(start: string, end: string): number {
   if (!start || !end) return 0;
   const [sh, sm] = start.split(':').map(Number);
@@ -32,13 +13,11 @@ function computeHoursFromTimes(start: string, end: string): number {
   if (eh < sh) {
     endDate = new Date(0, 0, 1, eh, em);
   }
-  let diff = (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60);
+  const diff = (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60);
   return diff < 0 ? 0 : diff;
 }
 
-/**
- * Adds a given number of hours to a time string ("HH:mm") and returns the result in "HH:mm" format.
- */
+// Helper function to add hours to a time string ("HH:mm").
 function addHours(time: string, hoursToAdd: number): string {
   const [hourStr, minuteStr] = time.split(':');
   const hour = parseInt(hourStr, 10);
@@ -50,9 +29,7 @@ function addHours(time: string, hoursToAdd: number): string {
   return `${newHour}:${newMinute}`;
 }
 
-/**
- * Determines a default sign‑in time based on the current local time.
- */
+// Helper function to determine default sign‑in time.
 function getDefaultStartTime(): string {
   const now = new Date();
   const totalMins = now.getHours() * 60 + now.getMinutes();
@@ -71,33 +48,54 @@ function getDefaultStartTime(): string {
 
 import { effectiveHours } from './utils';
 
+interface PerformanceModalProps {
+  formData: {
+    performance: string;
+    hours: string;
+    overtime: boolean;
+    freeDay: boolean;
+    startTime?: string;
+    endTime?: string;
+    trukki: boolean;
+  };
+  defaultShift: 'morning' | 'evening' | 'night';
+  onFormChange: (e: any) => void;
+  onSubmit: (e: React.FormEvent) => void;
+  onClose: () => void;
+  editing?: boolean; // When true, we're editing an existing entry.
+}
+
 const PerformanceModal: React.FC<PerformanceModalProps> = ({
   formData,
   defaultShift,
   onFormChange,
   onSubmit,
   onClose,
+  editing = false,
 }) => {
   const performanceInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     performanceInputRef.current?.focus();
   }, []);
 
+  // Only set a default startTime when NOT editing.
   useEffect(() => {
-    if (!formData.startTime || formData.startTime.trim() === "") {
+    if (!editing && (!formData.startTime || formData.startTime.trim() === "")) {
       const defaultStart = getDefaultStartTime();
       onFormChange({ target: { name: 'startTime', value: defaultStart } } as any);
     }
-  }, [formData.startTime, onFormChange]);
+  }, [formData.startTime, onFormChange, editing]);
 
+  // Only auto-calculate endTime and hours when NOT editing.
   useEffect(() => {
-    if (formData.startTime && (!formData.endTime || formData.endTime.trim() === "")) {
+    if (!editing && formData.startTime && (!formData.endTime || formData.endTime.trim() === "")) {
       const autoEnd = addHours(formData.startTime, 8);
       onFormChange({ target: { name: 'endTime', value: autoEnd } } as any);
       const hours = computeHoursFromTimes(formData.startTime, autoEnd);
       onFormChange({ target: { name: 'hours', value: hours.toFixed(2) } } as any);
     }
-  }, [formData.startTime, formData.endTime, onFormChange]);
+  }, [formData.startTime, formData.endTime, onFormChange, editing]);
 
   const handleStartTime = (newVal: string) => {
     onFormChange({ target: { name: 'startTime', value: newVal } } as any);
