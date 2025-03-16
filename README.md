@@ -6,7 +6,7 @@ Polku Web is a web application built with React and Vite. This project is design
 
 - Track daily performance and goals
 - View performance averages and required averages to meet goals
-- Interactive calendar to add and delete performance data
+- Interactive calendar to add, edit and delete performance data
 - Responsive design for mobile and desktop
 
 ## Getting Started
