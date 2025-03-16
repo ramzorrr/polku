@@ -126,9 +126,10 @@ const Tavoite: React.FC<TavoiteProps> = ({ data, period, selectedDate }) => {
         </div>
       )}
 
+      <div className="mt-4 grid grid-cols-1 gap-4">{!isPastPeriod && <RemainingWorkdays days={sharedMissingDays} />}</div>
+
       {savedGoal !== null && remainingDataNormal && hasNormalData && (
         <div className="mt-4 grid grid-cols-1 gap-4">
-          {!isPastPeriod && <RemainingWorkdays days={sharedMissingDays} />}
           <h1 className="text-xl font-semibold mb-2">Keräys</h1>
           <div className="p-6 bg-gradient-to-r from-pink-600 to-pink-400 text-white rounded-lg shadow-md hover:shadow-xl transform hover:scale-105 transition duration-300">
             <h3 className="text-xl font-semibold mb-2">Jakson keskisuorite</h3>
