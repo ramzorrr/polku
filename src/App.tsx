@@ -357,7 +357,7 @@ const App = () => {
           <div className="bg-white p-6 rounded text-black shadow-lg w-80">
             <h3 className="text-xl font-bold mb-4">Uusi päivitys</h3>
             <p className="mb-4">
-              Uusi päivitys: trukkiseuranta ja euromäärät suoritteista
+              Trukkiseuranta ja euromäärät suoritteista
             </p>
             <button
               onClick={() => {
