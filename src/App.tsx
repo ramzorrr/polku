@@ -32,6 +32,8 @@ const App = () => {
     startTime: '',
     endTime: '',
     trukki: false,
+    tuntikortti: '',
+    tuntikorttiIncrement: '',
   });
 
   function getOngoingShift(): 'morning' | 'evening' | 'night' {
@@ -68,6 +70,8 @@ const App = () => {
       startTime: '',
       endTime: '',
       trukki: false,
+      tuntikortti: '',
+      tuntikorttiIncrement: '',
     });
     setShowModal(true);
   };
@@ -91,6 +95,9 @@ const App = () => {
           startTime: selectedDayData.normal.startTime || '', // use stored value if exists
           endTime: selectedDayData.normal.endTime || '',
           trukki: false,
+          tuntikortti: selectedDayData.normal.tuntikortti ? (selectedDayData.normal.tuntikortti * 60).toString() : '',
+          // Also initialize the increment field as empty:
+          tuntikorttiIncrement: '',
         });
       } else if (selectedDayData.forklift) {
         setFormData({
@@ -101,6 +108,8 @@ const App = () => {
           startTime: selectedDayData.forklift.startTime || '',
           endTime: selectedDayData.forklift.endTime || '',
           trukki: true,
+          tuntikortti: selectedDayData.forklift.tuntikortti ? (selectedDayData.forklift.tuntikortti * 60).toString() : '',
+          tuntikorttiIncrement: '',
         });
       }
       setShowModal(true);
@@ -190,9 +199,13 @@ const App = () => {
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const { performance, hours, overtime, freeDay, trukki } = formData;
+    const { performance, hours, overtime, freeDay, trukki, tuntikortti } = formData;
     const parsedPerformance = parseFloat(performance);
     const parsedHours = parseFloat(hours);
+    // Convert the accumulated tuntikortti from minutes to hours
+    const parsedTuntikorttiMinutes = tuntikortti ? parseFloat(tuntikortti) : 0;
+    const parsedTuntikortti = parsedTuntikorttiMinutes / 60;
+  
     if (isNaN(parsedPerformance)) {
       alert("Lisää suorite esim. 7.25");
       return;
@@ -214,6 +227,7 @@ const App = () => {
           freeDay,
           startTime: formData.startTime,
           endTime: formData.endTime,
+          tuntikortti: parsedTuntikortti,
         };
       } else {
         dayData.normal = {
@@ -223,12 +237,12 @@ const App = () => {
           freeDay,
           startTime: formData.startTime,
           endTime: formData.endTime,
+          tuntikortti: parsedTuntikortti,
         };
       }
       return { ...prevData, [dateString]: dayData };
     });
     setShowModal(false);
-    // When not editing, clear the form.
     if (!isEditing) {
       setFormData({
         performance: '',
@@ -238,6 +252,8 @@ const App = () => {
         startTime: '',
         endTime: '',
         trukki: false,
+        tuntikortti: '',
+        tuntikorttiIncrement: '',
       });
     }
     setIsEditing(false);

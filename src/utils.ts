@@ -7,6 +7,7 @@ export interface DateData {
   freeDay: boolean;
   startTime?: string;
   endTime?: string;
+  tuntikortti?: number;
 }
 
 export interface DailyData {

@@ -57,6 +57,10 @@ interface PerformanceModalProps {
     startTime?: string;
     endTime?: string;
     trukki: boolean;
+    // The accumulated total of tuntikortti in minutes.
+    tuntikortti: string;
+    // The current increment input (in minutes).
+    tuntikorttiIncrement: string;
   };
   defaultShift: 'morning' | 'evening' | 'night';
   onFormChange: (e: any) => void;
@@ -74,7 +78,7 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
   editing = false,
 }) => {
   const performanceInputRef = useRef<HTMLInputElement>(null);
-
+  
   useEffect(() => {
     performanceInputRef.current?.focus();
   }, []);
@@ -92,32 +96,49 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
     if (!editing && formData.startTime && (!formData.endTime || formData.endTime.trim() === "")) {
       const autoEnd = addHours(formData.startTime, 8);
       onFormChange({ target: { name: 'endTime', value: autoEnd } } as any);
-      const hours = computeHoursFromTimes(formData.startTime, autoEnd);
-      onFormChange({ target: { name: 'hours', value: hours.toFixed(2) } } as any);
+      const hrs = computeHoursFromTimes(formData.startTime, autoEnd);
+      onFormChange({ target: { name: 'hours', value: hrs.toFixed(2) } } as any);
     }
   }, [formData.startTime, formData.endTime, onFormChange, editing]);
 
   const handleStartTime = (newVal: string) => {
     onFormChange({ target: { name: 'startTime', value: newVal } } as any);
     if (formData.endTime && formData.endTime.trim() !== "") {
-      const hours = computeHoursFromTimes(newVal, formData.endTime);
-      onFormChange({ target: { name: 'hours', value: hours.toFixed(2) } } as any);
+      const hrs = computeHoursFromTimes(newVal, formData.endTime);
+      onFormChange({ target: { name: 'hours', value: hrs.toFixed(2) } } as any);
     }
   };
 
   const handleEndTime = (newVal: string) => {
     onFormChange({ target: { name: 'endTime', value: newVal } } as any);
     if (formData.startTime && formData.startTime.trim() !== "") {
-      const hours = computeHoursFromTimes(formData.startTime, newVal);
-      onFormChange({ target: { name: 'hours', value: hours.toFixed(2) } } as any);
+      const hrs = computeHoursFromTimes(formData.startTime, newVal);
+      onFormChange({ target: { name: 'hours', value: hrs.toFixed(2) } } as any);
     }
   };
 
-  const hoursNumber = parseFloat(formData.hours) || 0;
-  const perfValue = parseFloat(formData.performance) || 0;
-  const effective = effectiveHours(hoursNumber, formData.overtime, formData.freeDay);
-  const currentPercentage = effective > 0 ? (perfValue / effective) * 100 : 0;
-  const additionalRequired = effective - perfValue;
+  // New function: when the user clicks "Lisää" for tuntikortti,
+  // add the current increment to the accumulated total.
+  const handleAddTuntikortti = () => {
+    const currentTotal = parseFloat(formData.tuntikortti || "0");
+    const increment = parseFloat(formData.tuntikorttiIncrement || "0");
+    const newTotal = currentTotal + increment;
+    // Update the accumulated total.
+    onFormChange({ target: { name: 'tuntikortti', value: newTotal.toString() } } as any);
+    // Clear the increment input.
+    onFormChange({ target: { name: 'tuntikorttiIncrement', value: '' } } as any);
+  };
+
+  // New function: "Vähennä työtunneista" – subtract the accumulated tuntikortti from hours.
+  const handleDeductTuntikortti = () => {
+    const currentTuntikortti = parseFloat(formData.tuntikortti || "0");
+    const deductionHours = currentTuntikortti / 60; // Convert minutes to hours.
+    const currentHours = parseFloat(formData.hours || "0");
+    const newHours = Math.max(0, currentHours - deductionHours); // Don't go below 0.
+    onFormChange({ target: { name: 'hours', value: newHours.toFixed(2) } } as any);
+    // Optionally, reset the accumulated tuntikortti.
+    onFormChange({ target: { name: 'tuntikortti', value: '' } } as any);
+  };
 
   const handleLocalSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -127,6 +148,12 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
     }
     onSubmit(e);
   };
+
+  const hoursNumber = parseFloat(formData.hours) || 0;
+  const perfValue = parseFloat(formData.performance) || 0;
+  const effective = effectiveHours(hoursNumber, formData.overtime, formData.freeDay);
+  const currentPercentage = effective > 0 ? (perfValue / effective) * 100 : 0;
+  const additionalRequired = effective - perfValue;
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 backdrop-blur-sm transition-opacity duration-300" lang="fi-FI">
@@ -190,6 +217,30 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
               max="24"
               required
             />
+          </div>
+          {/* New Tuntikortti fields */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-black">Lisää tuntikortti (min):</label>
+            <div className="flex">
+              <input
+                type="number"
+                name="tuntikorttiIncrement"
+                value={formData.tuntikorttiIncrement || ''}
+                onChange={onFormChange}
+                className="mt-1 block w-full border border-black rounded-md"
+                step="1"
+                min="0"
+              />
+              <button type="button" onClick={handleAddTuntikortti} className="ml-2 px-3 py-2 bg-secondary text-white rounded">
+                Lisää
+              </button>
+            </div>
+            <p className="mt-1 text-sm text-gray-600">
+              Kerätty tuntikortti: {formData.tuntikortti ? formData.tuntikortti : '0'} min
+            </p>
+            <button type="button" onClick={handleDeductTuntikortti} className="mt-2 px-3 py-2 bg-red-600 text-white rounded">
+              Vähennä työtunneista
+            </button>
           </div>
           <div className="mb-4 flex items-center">
             <label className="block text-sm font-medium text-black mr-2">
