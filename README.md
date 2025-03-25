@@ -81,30 +81,6 @@ License
 
 This project is licensed under the MIT License. See the LICENSE file for details.
 
-### Explanation
-
-- **Project Title and Description**: Provides a brief overview of the project.
-- **Features**: Lists the main features of the application.
-- **Getting Started**: Includes prerequisites, installation steps, and how to run the development server.
-- **Accessing the Server on Other Devices**: Explains how to configure the server to be accessible on other devices within the same network.
-- **Building for Production**: Instructions for creating a production build.
-- **Deployment**: Notes on deploying the application.
-- **Usage**: Instructions on how to use the main features of the application.
-- **Contributing**: Encourages contributions and explains how to contribute.
-- **License**: Specifies the project's license.
-
-This README should give users a good starting point for understanding and working with your project.
-### Explanation
-
-- **Project Title and Description**: Provides a brief overview of the project.
-- **Features**: Lists the main features of the application.
-- **Getting Started**: Includes prerequisites, installation steps, and how to run the development server.
-- **Accessing the Server on Other Devices**: Explains how to configure the server to be accessible on other devices within the same network.
-- **Building for Production**: Instructions for creating a production build.
-- **Deployment**: Notes on deploying the application.
-- **Usage**: Instructions on how to use the main features of the application.
-- **Contributing**: Encourages contributions and explains how to contribute.
-- **License**: Specifies the project's license.
 
 This README should give users a good starting point for understanding and working with your project.
 
