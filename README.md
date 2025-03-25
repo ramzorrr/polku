@@ -20,19 +20,19 @@ Polku Web is a web application built with React and Vite. This project is design
 
 1. Clone the repository:
 
-   ```sh
+   sh
    git clone https://github.com/ramzorrr/polkuweb.git
    cd polkuweb
    
    
 2. Install dependencies
-   ```npm install
+   npm install
    # or
    yarn install
 
 Running the Development Server
 To start the development server, run:
-```npm run dev
+npm run dev
 # or
 yarn dev
 
