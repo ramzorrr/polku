@@ -242,7 +242,7 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
               </button>
             </div>
             <p className="mt-1 text-sm text-gray-600">
-              Kerätty tuntikortti: {formData.tuntikortti ? formData.tuntikortti : '0'} min
+              Tuntikortti: {formData.tuntikortti ? formData.tuntikortti : '0'} min
             </p>
             <button type="button" onClick={handleDeductTuntikortti} className="mt-2 px-3 py-2 bg-red-600 text-white rounded">
               Vähennä työtunneista
