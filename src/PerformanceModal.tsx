@@ -117,34 +117,39 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
     }
   };
 
-  // New function: when the user clicks "Lisää" for tuntikortti,
-  // add the current increment to the accumulated total.
+  // When the user clicks "Lisää" for tuntikortti, add the current increment to the accumulated total.
   const handleAddTuntikortti = () => {
     const currentTotal = parseFloat(formData.tuntikortti || "0");
     const increment = parseFloat(formData.tuntikorttiIncrement || "0");
     const newTotal = currentTotal + increment;
-    // Update the accumulated total.
     onFormChange({ target: { name: 'tuntikortti', value: newTotal.toString() } } as any);
     // Clear the increment input.
     onFormChange({ target: { name: 'tuntikorttiIncrement', value: '' } } as any);
   };
 
-  // New function: "Vähennä työtunneista" – subtract the accumulated tuntikortti from hours.
+  // "Vähennä työtunneista" subtracts the accumulated tuntikortti (converted to hours) from the current hours.
   const handleDeductTuntikortti = () => {
     const currentTuntikortti = parseFloat(formData.tuntikortti || "0");
     const deductionHours = currentTuntikortti / 60; // Convert minutes to hours.
     const currentHours = parseFloat(formData.hours || "0");
-    const newHours = Math.max(0, currentHours - deductionHours); // Don't go below 0.
+    const newHours = Math.max(0, currentHours - deductionHours);
     onFormChange({ target: { name: 'hours', value: newHours.toFixed(2) } } as any);
-    // Optionally, reset the accumulated tuntikortti.
+    // Optionally reset the accumulated tuntikortti.
     onFormChange({ target: { name: 'tuntikortti', value: '' } } as any);
   };
 
   const handleLocalSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const parsedPerformance = parseFloat(formData.performance);
-    if (Math.abs(parsedPerformance - 12.317) < 0.001) {
-      alert("Miro on botti joka syö vehnäpullaa!");
+    // Allow submission if either performance or tuntikortti is provided.
+    const parsedPerformance = formData.performance ? parseFloat(formData.performance) : 0;
+    const parsedHours = parseFloat(formData.hours);
+    if (!formData.performance && !formData.tuntikortti) {
+      alert("Syötä joko suorite tai tuntikortti.");
+      return;
+    }
+    if (isNaN(parsedHours) || parsedHours < 0 || parsedHours > 16) {
+      alert("Lisää aika väliltä 0-16");
+      return;
     }
     onSubmit(e);
   };
@@ -192,13 +197,14 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
               onChange={onFormChange}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
+                  // On Enter, submit immediately.
                   e.preventDefault();
                   handleLocalSubmit(e);
                 }
               }}
               className="mt-1 block w-full border border-black rounded-md"
               step="1"
-              required
+              // Removed required attribute so that tuntikortti can be submitted alone.
             />
             <p className="text-sm text-gray-600 mt-1">
               {currentPercentage.toFixed(1)}%. Tarvitset {additionalRequired.toFixed(2)} saavuttaaksesi 100%.
@@ -218,7 +224,7 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
               required
             />
           </div>
-          {/* New Tuntikortti fields */}
+          {/* Tuntikortti fields */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-black">Lisää tuntikortti (min):</label>
             <div className="flex">
@@ -236,7 +242,7 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
               </button>
             </div>
             <p className="mt-1 text-sm text-gray-600">
-              Tuntikortti päällä: {formData.tuntikortti ? formData.tuntikortti : '0'} min
+              Kerätty tuntikortti: {formData.tuntikortti ? formData.tuntikortti : '0'} min
             </p>
             <button type="button" onClick={handleDeductTuntikortti} className="mt-2 px-3 py-2 bg-red-600 text-white rounded">
               Vähennä työtunneista

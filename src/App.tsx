@@ -22,8 +22,9 @@ const App = () => {
   const [showChangelogPopup, setShowChangelogPopup] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [warehouse, setWarehouse] = useState<string>('pakaste'); // default to "pakaste"
+  const [defaultTrukki, setDefaultTrukki] = useState(false);
 
-  // Added "trukki" flag in form state.
+  
   const [formData, setFormData] = useState({
     performance: '',
     hours: '8',
@@ -69,9 +70,9 @@ const App = () => {
       freeDay: false,
       startTime: '',
       endTime: '',
-      trukki: false,
       tuntikortti: '',
       tuntikorttiIncrement: '',
+      trukki: defaultTrukki,
     });
     setShowModal(true);
   };
@@ -114,6 +115,20 @@ const App = () => {
       }
       setShowModal(true);
     }
+  };
+
+  useEffect(() => {
+    // Load the saved trukki flag from localStorage when the app mounts.
+    const storedTrukki = localStorage.getItem('defaultTrukki');
+    if (storedTrukki !== null) {
+      setDefaultTrukki(storedTrukki === 'true');
+    }
+  }, []);
+
+  const handleTrukkiToggle = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.checked;
+    setDefaultTrukki(newValue);
+    localStorage.setItem('defaultTrukki', newValue.toString());
   };
 
   useEffect(() => {
@@ -205,11 +220,7 @@ const App = () => {
     // Convert the accumulated tuntikortti from minutes to hours
     const parsedTuntikorttiMinutes = tuntikortti ? parseFloat(tuntikortti) : 0;
     const parsedTuntikortti = parsedTuntikorttiMinutes / 60;
-  
-    if (isNaN(parsedPerformance)) {
-      alert("Lisää suorite esim. 7.25");
-      return;
-    }
+ 
     if (isNaN(parsedHours) || parsedHours < 0 || parsedHours > 16) {
       alert("Lisää aika väliltä 0-16");
       return;
@@ -296,6 +307,15 @@ const App = () => {
           <option value="kv1">KV1 (ei tietoja)</option>
           <option value="kv2">KV2 (ei tietoja)</option>
         </select>
+      </div>
+
+      <div className="mb-4">
+        <label className="mr-2 font-semibold">Trukki</label>
+        <input
+          type="checkbox"
+          checked={defaultTrukki}
+          onChange={handleTrukkiToggle}
+        />
       </div>
       <h2 className="text-secondary text-2xl font-bold mb-2">Suoritelaskuri</h2>
       
@@ -393,6 +413,29 @@ const App = () => {
           editing={isEditing}
         />
       )}
+
+ 
+{false && (
+  <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+    <div className="bg-white p-6 rounded text-black shadow-lg w-80">
+      <h3 className="text-xl font-bold mb-4">Uusi päivitys</h3>
+      <p className="mb-4">
+        Trukkiseuranta ja euromäärät suoritteista
+      </p>
+      <button
+        onClick={() => {
+          localforage
+            .setItem('trukkiChangelogShown', true)
+            .catch((err) => console.error('Error saving trukkiChangelogShown:', err));
+          // setShowChangelogPopup(false);
+        }}
+        className="px-4 py-2 bg-secondary text-white rounded"
+      >
+        OK
+      </button>
+    </div>
+  </div>
+)}
     </div>
   );
 };
