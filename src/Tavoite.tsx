@@ -143,7 +143,7 @@ const Tavoite: React.FC<TavoiteProps> = ({ data, period, selectedDate, warehouse
             {remainingDataNormal.totalInputHours}h x {performanceToEuro(Number(remainingDataNormal.currentAveragePercentage), warehouse)} €/h = {(Number(remainingDataNormal.totalInputHours) * performanceToEuro(Number(remainingDataNormal.currentAveragePercentage), warehouse)).toFixed(2)} €
             </p>
           </div>
-          {!periodCompleted && (
+          {(!periodCompleted || sharedMissingDays === 1) && (
             <>
               <DailyPerformance
                 value={remainingDataNormal.dailyRequiredAbsolute}
