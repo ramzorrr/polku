@@ -283,6 +283,7 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
               onChange={onFormChange}
               className="h-4 w-4"
             />
+            <span className="text-gray-500 text-sm ml-2">Huom! Yli tai alle 4 tuntia</span>
           </div>
           <div className="flex justify-end">
             <button
