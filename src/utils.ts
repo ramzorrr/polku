@@ -50,13 +50,10 @@ export const effectiveHours = (
   }
 };
 
-export const performanceToEuro = (percentage: number, warehouse: string = "pakaste"): number => {
-  if (warehouse !== "pakaste") {
-    // For KV1/KV2, return 0 (or a placeholder value) until rates are added.
-    return 0;
-  }
-
-
+/**
+ * Converts performance percentage to €/h for normal mode.
+ */
+export const performanceToEuro = (percentage: number): number => {
   const performanceRates: { [key: number]: number } = {
     150: 7.07,
     149: 7.02,
@@ -117,20 +114,14 @@ export const performanceToEuro = (percentage: number, warehouse: string = "pakas
     94: 0.0,
   };
 
-  // Round the given percentage.
   const rounded = Math.round(percentage);
-  // Return the corresponding €/h or a fallback within the valid range.
   return performanceRates[rounded] ?? performanceRates[Math.max(94, Math.min(150, rounded))];
 };
 
-// forkliftPerformanceToEuro.ts (or place in utils.ts)
-
-export const forkliftPerformanceToEuro = (percentage: number, warehouse: string = "pakaste"): number => {
-  if (warehouse !== "pakaste") {
-    return 0;
-  }
-
-
+/**
+ * Converts performance percentage to €/h for forklift mode.
+ */
+export const forkliftPerformanceToEuro = (percentage: number): number => {
   const forkliftRates: { [key: number]: number } = {
     150: 7.46,
     149: 7.38,
@@ -190,9 +181,7 @@ export const forkliftPerformanceToEuro = (percentage: number, warehouse: string 
     95: 0.23,
   };
 
-  // Round the given percentage to the nearest integer.
   const rounded = Math.round(percentage);
-  // Return the corresponding €/h or a fallback within the valid range.
   return forkliftRates[rounded] ?? forkliftRates[Math.max(95, Math.min(150, rounded))];
 };
 
