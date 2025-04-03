@@ -34,9 +34,6 @@ const Ohje: React.FC = () => {
         <li>
           <strong>Tuntikortti:</strong> Jos hommia ei ole, voit lisätä tuntikorttiin aikaa ja lopulta vähentää ne työtunneista painamalla "vähennä työtunneista". Huom! Aina kun teet muutoksia, muista painaa "Tallenna" -painiketta.
         </li>
-        <li>
-          <strong>Varaston Valinta:</strong> Valitse varasto (esim. Pakaste, KV1, KV2). Varastokohtaiset suoritemäärät määritellään sen mukaan. Tällä hetkellä on vain Pakastevaraston taulukot lisättynä. Niistä saa kuitenkin osviittaa euromääristä<div className=""></div>
-        </li>
       </ul>
 
       <div className="text-secondary bg-primary min-h-screen text-black p-6">
