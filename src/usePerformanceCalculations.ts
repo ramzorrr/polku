@@ -81,9 +81,9 @@ export const usePerformanceCalculations = (
           if (day >= periodStartDay && day <= periodEndDay && data[dateString]?.normal) {
             const entry = data[dateString].normal;
             // Deduct 0.5h for shifts of at least 4h (non-overtime/non-free day).
-            const paidHours = (entry.hours >= 4 && !entry.overtime && !entry.freeDay)
-              ? entry.hours - 0.5
-              : entry.hours;
+            const paidHours = (entry.hours >= 4)
+              ? (entry.overtime || entry.freeDay ? entry.hours * 0.967 : (entry.hours - 0.5) * 0.967)
+              : entry.hours * 0.967;
             totalInputHours += paidHours;
             const eff = effectiveHours(entry.hours, entry.overtime, entry.freeDay);
             totalEffectiveLogged += eff;
@@ -127,7 +127,7 @@ export const usePerformanceCalculations = (
           if (day >= periodStartDay && day <= periodEndDay && data[dateString]?.forklift) {
             const entry = data[dateString].forklift;
             const paidHours = (entry.hours >= 4 && !entry.overtime && !entry.freeDay)
-              ? entry.hours - 0.5
+              ? (entry.hours - 0.5) * 0.967
               : entry.hours;
             totalInputHours += paidHours;
             const eff = effectiveHours(entry.hours, entry.overtime, entry.freeDay);

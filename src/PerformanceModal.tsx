@@ -154,6 +154,21 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
     onSubmit(e);
   };
 
+  const handleExclusiveCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, checked } = e.target;
+    
+    // If one checkbox is being enabled, ensure the other is disabled.
+    if (name === 'overtime' && checked) {
+      // Disable freeDay when overtime is enabled.
+      onFormChange({ target: { name: 'freeDay', value: false } } as any);
+    } else if (name === 'freeDay' && checked) {
+      // Disable overtime when freeDay is enabled.
+      onFormChange({ target: { name: 'overtime', value: false } } as any);
+    }
+    // Finally, pass along the original change.
+    onFormChange(e);
+  };
+
   const hoursNumber = parseFloat(formData.hours) || 0;
   const perfValue = parseFloat(formData.performance) || 0;
   const effective = effectiveHours(hoursNumber, formData.overtime, formData.freeDay);
@@ -256,7 +271,7 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
               type="checkbox"
               name="overtime"
               checked={formData.overtime}
-              onChange={onFormChange}
+              onChange={handleExclusiveCheckboxChange}
               className="h-4 w-4"
             />
           </div>
@@ -268,7 +283,7 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({
               type="checkbox"
               name="freeDay"
               checked={formData.freeDay}
-              onChange={onFormChange}
+              onChange={handleExclusiveCheckboxChange}
               className="h-4 w-4"
             />
           </div>
